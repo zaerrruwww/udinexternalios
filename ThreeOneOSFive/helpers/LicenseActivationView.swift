@@ -14,15 +14,19 @@ struct LicenseActivationView: View {
                 ScrollViewReader { proxy in
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
-                            Spacer(minLength: 50)
+                            Spacer(minLength: 40)
 
-                            Text("UDIN")
-                                .font(.system(size: 36, weight: .heavy, design: .default))
+                            AppLogo(size: 88)
+                                .shadow(color: AppTheme.emeraldActive.opacity(0.35), radius: 16, y: 6)
+                                .padding(.bottom, 16)
+
+                            Text("UDIN EXTERNAL")
+                                .font(.system(size: 30, weight: .heavy, design: .default))
                                 .tracking(2.5)
                                 .foregroundStyle(.white)
 
-                            Text("Cyber Stealth Edition • v2.4.0")
-                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            Text("UDINXITER MARKETPLACE • v2.4.0")
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
                                 .foregroundStyle(AppTheme.mutedText)
                                 .padding(.top, 4)
 
