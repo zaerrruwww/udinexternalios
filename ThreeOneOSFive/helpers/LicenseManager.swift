@@ -77,7 +77,7 @@ final class LicenseManager: ObservableObject {
 
     func beginLaunchSession() {
         checkSavedState()
-        message = isActive ? "Ready to use" : "Key required — enter your access key"
+        message = isActive ? "Ready to use" : "Key required - enter your access key"
         
         if isActive, let key = rememberedKey() {
             silentVerify(key: key)
@@ -109,7 +109,7 @@ final class LicenseManager: ObservableObject {
         }
         lastAttemptAt = Date()
         isBusy = true
-        message = "Connecting to UDIN Server…"
+        message = "Connecting to UDIN Server..."
 
         guard let endpoint = URL(string: "\(serverURL)/api/license/activate") else {
             isBusy = false
@@ -251,7 +251,7 @@ final class LicenseManager: ObservableObject {
 
     func refresh() {
         checkSavedState()
-        message = isActive ? "Ready to use" : "Key required — enter your access key"
+        message = isActive ? "Ready to use" : "Key required - enter your access key"
     }
 
     func deactivate() {
