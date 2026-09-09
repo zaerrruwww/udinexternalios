@@ -32,7 +32,11 @@ final class LicenseManager: ObservableObject {
     }
 
     var serverURL: String {
-        UserDefaults.standard.string(forKey: "udin_custom_server_url") ?? Self.defaultServerURL
+        let custom = UserDefaults.standard.string(forKey: "udin_custom_server_url")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if custom.isEmpty || !custom.hasPrefix("http") {
+            return Self.defaultServerURL
+        }
+        return custom
     }
 
     init() {

@@ -644,6 +644,13 @@
     function saveLocalDb(keys) {
       try {
         localStorage.setItem('udin_licenses_cache', JSON.stringify(keys));
+        if (authToken) {
+          apiCall('/api/admin/keys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+            body: JSON.stringify({ action: 'sync', keys: keys })
+          }).catch(() => {});
+        }
       } catch (e) {}
     }
 

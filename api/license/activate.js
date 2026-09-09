@@ -106,7 +106,7 @@ module.exports = async (req, res) => {
 
   const now = new Date();
 
-  // If already bound to this HWID, verify
+  // Check HWID binding lock
   if (item.bound_hwid && item.bound_hwid === cleanHwid) {
     if (!item.is_lifetime && item.expiry_date) {
       if (now.getTime() >= new Date(item.expiry_date).getTime()) {
@@ -125,6 +125,13 @@ module.exports = async (req, res) => {
       is_lifetime: item.is_lifetime,
       expiry_date: item.expiry_date,
       bound_hwid: item.bound_hwid
+    });
+  }
+
+  if (item.bound_hwid && item.bound_hwid !== cleanHwid) {
+    return res.status(403).json({
+      success: false,
+      message: 'Key is already bound to another iPhone. Reset HWID on Web Admin to transfer.'
     });
   }
 

@@ -125,6 +125,58 @@ module.exports = async (req, res) => {
     return res.status(404).json({ success: false, message: 'Key not found.' });
   }
 
+  // BULK CREATE
+  if (action === 'bulk' || req.url.includes('bulk') || body.count) {
+    const count = Math.min(Math.max(parseInt(body.count, 10) || 5, 1), 50);
+    const prefix = (body.prefix || 'UDIN').trim().toUpperCase();
+    const generated = [];
+
+    const hours = parseFloat(duration_hours) || 0;
+    const isLifetime = hours <= 0;
+    const plan = isLifetime ? 'Lifetime VIP' : (hours < 24 ? hours + ' Jam VIP' : Math.round(hours / 24) + ' Hari VIP');
+
+    for (let i = 0; i < count; i++) {
+      const randStr = crypto.randomBytes(2).toString('hex').toUpperCase() + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
+      const kStr = `${prefix}-${randStr}`;
+      const rIdx = revoked.indexOf(kStr);
+      if (rIdx !== -1) revoked.splice(rIdx, 1);
+
+      const item = {
+        key: kStr,
+        plan,
+        duration_hours: isLifetime ? 0 : hours,
+        duration_days: isLifetime ? 0 : Math.round(hours / 24),
+        is_lifetime: isLifetime,
+        created_at: new Date().toISOString(),
+        activated_at: null,
+        expiry_date: null,
+        bound_hwid: null,
+        device_model: null,
+        customer_note: customer_note || `Bulk Batch (${count} keys)`,
+        is_banned: false,
+        status: 'UNBOUND'
+      };
+      keys.unshift(item);
+      generated.push(item);
+    }
+
+    saveDb({ keys, revoked });
+    return res.json({ success: true, message: `Successfully generated ${generated.length} keys!`, keys: generated });
+  }
+
+  // SYNC FROM ADMIN LOCALSTORAGE
+  if (action === 'sync' || Array.isArray(syncKeys)) {
+    if (Array.isArray(syncKeys)) {
+      syncKeys.forEach(k => {
+        const idx = keys.findIndex(x => x.key.toUpperCase() === k.key.toUpperCase());
+        if (idx >= 0) keys[idx] = k;
+        else keys.push(k);
+      });
+    }
+    saveDb({ keys, revoked });
+    return res.json({ success: true, message: 'Database synced successfully.', total: keys.length });
+  }
+
   // CREATE KEY
   const keyStr = custom_key ? custom_key.trim().toUpperCase() : ('UDIN-' + crypto.randomBytes(2).toString('hex').toUpperCase() + '-' + crypto.randomBytes(2).toString('hex').toUpperCase());
   const revIdx = revoked.indexOf(keyStr);
