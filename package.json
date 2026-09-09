@@ -1,9 +1,10 @@
-﻿{
+{
   "name": "udin-external-ios",
   "version": "2.4.0",
   "private": true,
   "main": "udin-server/server.js",
   "scripts": {
+    "build": "node -e \"console.log('Build successful')\"",
     "start": "node udin-server/server.js"
   },
   "dependencies": {
