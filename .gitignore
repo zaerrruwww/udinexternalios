@@ -1,0 +1,31 @@
+# Xcode & iOS
+build/
+DerivedData/
+*.xcuserstate
+project.xcworkspace/xcuserdata/
+*.xcuserdata
+*.xcscmblueprint
+*.ipa
+*.xcarchive
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+__MACOSX/
+
+# Node & Web Admin
+node_modules/
+web-admin-panel/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary & Editor files
+*.tmp
+*.log
+.vscode/
+.idea/
+scratch/

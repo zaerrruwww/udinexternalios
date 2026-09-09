@@ -1,0 +1,16 @@
+{
+  "name": "udin-license-panel",
+  "version": "2.4.0",
+  "description": "Ultra-Modern Web Admin Panel & License Server for UDIN EXTERNAL IOS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "author": "zaeruw",
+  "license": "MIT"
+}
