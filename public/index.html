@@ -635,12 +635,19 @@
       btn.disabled = true;
       btn.innerHTML = 'AUTHENTICATING…';
       try {
-        const res = await fetch('/api/admin/login', {
+        let res = await fetch('/api/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password })
         });
-        const data = await res.json();
+        if (res.status === 404) {
+          res = await fetch('/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+        }
+        const data = await res.json().catch(() => ({ success: false, message: `Server HTTP ${res.status}` }));
         if (data.success) {
           authToken = data.token;
           localStorage.setItem('udin_admin_token', authToken);
@@ -650,7 +657,7 @@
           showToast(data.message || 'Invalid Admin Password', 'error');
         }
       } catch (err) {
-        showToast('Connection failed to license server', 'error');
+        showToast('Connection error: ' + (err.message || 'Check network / server'), 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<span>AUTHENTICATE & ENTER</span><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';

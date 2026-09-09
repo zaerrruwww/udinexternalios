@@ -74,11 +74,13 @@ function getPlanName(hours) {
   return `${days} Hari VIP`;
 }
 
+const router = express.Router();
+
 // -------------------------------------------------------------
 // CLIENT API ENDPOINTS (IOS APP)
 // -------------------------------------------------------------
 
-app.post('/api/license/activate', (req, res) => {
+router.post('/license/activate', (req, res) => {
   const { key, hwid, device_model, os_version } = req.body;
   if (!key || !hwid) {
     return res.status(400).json({ success: false, message: 'Key and device HWID are required.' });
@@ -147,7 +149,7 @@ app.post('/api/license/activate', (req, res) => {
   });
 });
 
-app.post('/api/license/verify', (req, res) => {
+router.post('/license/verify', (req, res) => {
   const { key, hwid } = req.body;
   if (!key || !hwid) {
     return res.status(400).json({ success: false, message: 'Key and HWID required.' });
@@ -183,7 +185,7 @@ app.post('/api/license/verify', (req, res) => {
   });
 });
 
-app.get('/api/time', (req, res) => {
+router.get('/time', (req, res) => {
   const now = new Date();
   res.json({
     server_time_iso: now.toISOString(),
@@ -192,7 +194,7 @@ app.get('/api/time', (req, res) => {
   });
 });
 
-app.get('/api/health', (req, res) => {
+router.get('/health', (req, res) => {
   res.json({
     status: 'online',
     service: 'UDIN License Server',
@@ -215,7 +217,7 @@ function authMiddleware(req, res, next) {
   next();
 }
 
-app.post('/api/admin/login', (req, res) => {
+router.post('/admin/login', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
     return res.json({ success: true, token: ADMIN_PASSWORD, message: 'Login successful' });
@@ -223,7 +225,7 @@ app.post('/api/admin/login', (req, res) => {
   return res.status(401).json({ success: false, message: 'Incorrect Admin Password' });
 });
 
-app.get('/api/admin/keys', authMiddleware, (req, res) => {
+router.get('/admin/keys', authMiddleware, (req, res) => {
   const enrichedKeys = db.keys.map(k => ({
     ...k,
     status: evaluateKeyStatus(k)
@@ -245,7 +247,7 @@ app.get('/api/admin/keys', authMiddleware, (req, res) => {
   });
 });
 
-app.post('/api/admin/keys/create', authMiddleware, (req, res) => {
+router.post('/admin/keys/create', authMiddleware, (req, res) => {
   const { custom_key, duration_hours, duration_days, customer_note } = req.body;
   
   let keyString = custom_key ? custom_key.trim() : `UDIN-${crypto.randomBytes(3).toString('hex').toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
@@ -285,7 +287,7 @@ app.post('/api/admin/keys/create', authMiddleware, (req, res) => {
   res.json({ success: true, message: 'Key created successfully', key: newKey });
 });
 
-app.post('/api/admin/keys/bulk', authMiddleware, (req, res) => {
+router.post('/admin/keys/bulk', authMiddleware, (req, res) => {
   const { count, duration_hours, duration_days, prefix, customer_note } = req.body;
   const num = Math.min(Math.max(parseInt(count, 10) || 5, 1), 50);
 
@@ -326,7 +328,7 @@ app.post('/api/admin/keys/bulk', authMiddleware, (req, res) => {
   res.json({ success: true, message: `Successfully generated ${generated.length} keys!`, keys: generated });
 });
 
-app.post('/api/admin/keys/cleanup-expired', authMiddleware, (req, res) => {
+router.post('/admin/keys/cleanup-expired', authMiddleware, (req, res) => {
   const initialCount = db.keys.length;
   db.keys = db.keys.filter(k => evaluateKeyStatus(k) !== 'EXPIRED');
   const removed = initialCount - db.keys.length;
@@ -334,7 +336,7 @@ app.post('/api/admin/keys/cleanup-expired', authMiddleware, (req, res) => {
   res.json({ success: true, message: `Cleaned up ${removed} expired keys.` });
 });
 
-app.post('/api/admin/keys/reset-hwid', authMiddleware, (req, res) => {
+router.post('/admin/keys/reset-hwid', authMiddleware, (req, res) => {
   const key = req.body?.key || req.query?.key;
   if (!key) return res.status(400).json({ success: false, message: 'Key required.' });
   const item = db.keys.find(k => k.key.toLowerCase() === String(key).trim().toLowerCase());
@@ -347,7 +349,7 @@ app.post('/api/admin/keys/reset-hwid', authMiddleware, (req, res) => {
   res.json({ success: true, message: `HWID reset for ${item.key}. User can now bind a new device.` });
 });
 
-app.post('/api/admin/keys/toggle-ban', authMiddleware, (req, res) => {
+router.post('/admin/keys/toggle-ban', authMiddleware, (req, res) => {
   const key = req.body?.key || req.query?.key;
   if (!key) return res.status(400).json({ success: false, message: 'Key required.' });
   const item = db.keys.find(k => k.key.toLowerCase() === String(key).trim().toLowerCase());
@@ -359,7 +361,7 @@ app.post('/api/admin/keys/toggle-ban', authMiddleware, (req, res) => {
   res.json({ success: true, message: `Key ${item.key} is now ${item.is_banned ? 'BANNED' : 'UNBANNED'}.` });
 });
 
-app.post('/api/admin/keys/extend', authMiddleware, (req, res) => {
+router.post('/admin/keys/extend', authMiddleware, (req, res) => {
   const key = req.body?.key || req.query?.key;
   const { extra_hours, extra_days } = req.body || {};
   if (!key) return res.status(400).json({ success: false, message: 'Key required.' });
@@ -408,17 +410,17 @@ function deleteKeyHandler(req, res) {
   return res.json({ success: true, message: `Key ${deleted.key} successfully deleted!` });
 }
 
-app.post('/api/admin/keys/delete', authMiddleware, deleteKeyHandler);
-app.delete('/api/admin/keys', authMiddleware, deleteKeyHandler);
-app.delete('/api/admin/keys/:key', authMiddleware, deleteKeyHandler);
+router.post('/admin/keys/delete', authMiddleware, deleteKeyHandler);
+router.delete('/admin/keys', authMiddleware, deleteKeyHandler);
+router.delete('/admin/keys/:key', authMiddleware, deleteKeyHandler);
 
-app.get('/api/admin/keys/export', authMiddleware, (req, res) => {
+router.get('/admin/keys/export', authMiddleware, (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', 'attachment; filename="udin_licenses_backup.json"');
   res.send(JSON.stringify(db, null, 2));
 });
 
-app.post('/api/admin/keys/import', authMiddleware, (req, res) => {
+router.post('/admin/keys/import', authMiddleware, (req, res) => {
   const { keys } = req.body;
   if (!Array.isArray(keys)) {
     return res.status(400).json({ success: false, message: 'Invalid format. Expected keys array.' });
@@ -427,5 +429,9 @@ app.post('/api/admin/keys/import', authMiddleware, (req, res) => {
   saveDatabase(db);
   res.json({ success: true, message: `Successfully imported ${keys.length} licenses!` });
 });
+
+// Dual mounting: works both when URL contains /api or when Vercel rewrites without /api
+app.use('/api', router);
+app.use('/', router);
 
 module.exports = app;
