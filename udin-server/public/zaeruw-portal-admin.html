@@ -1108,10 +1108,10 @@
         renderKeys();
       }
       try {
-        await apiCall('/api/admin/keys/reset-hwid', {
+        await apiCall('/api/admin/keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-          body: JSON.stringify({ key })
+          body: JSON.stringify({ action: 'reset-hwid', key: key })
         });
       } catch (err) {}
       showToast('HWID reset successfully!', 'success');
@@ -1128,10 +1128,10 @@
         renderKeys();
       }
       try {
-        await apiCall('/api/admin/keys/extend', {
+        await apiCall('/api/admin/keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-          body: JSON.stringify({ key, extra_hours: extraHours })
+          body: JSON.stringify({ action: 'extend', key: key, extra_hours: extraHours })
         });
       } catch (err) {}
       showToast('Durasi berhasil diperpanjang', 'success');
@@ -1148,10 +1148,10 @@
         renderKeys();
       }
       try {
-        await apiCall('/api/admin/keys/toggle-ban', {
+        await apiCall('/api/admin/keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-          body: JSON.stringify({ key })
+          body: JSON.stringify({ action: 'toggle-ban', key: key })
         });
       } catch (err) {}
       showToast('Status lisensi diperbarui', 'info');
@@ -1166,13 +1166,14 @@
       renderKeys();
 
       try {
-        await apiCall('/api/admin/keys/delete', {
+        await apiCall('/api/admin/keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-          body: JSON.stringify({ key: key })
+          body: JSON.stringify({ action: 'delete', key: key })
         });
       } catch (err) {}
-      showToast('Key berhasil dihapus', 'info');
+      showToast('Key ' + key + ' berhasil dihapus permanen', 'success');
+      fetchKeys();
     }
 
     async function handleCleanupExpired() {
