@@ -37,5 +37,5 @@ Ultra-modern, cloud-ready License Server & Management Dashboard to generate, man
 ## 📱 Hubungkan dengan Aplikasi iOS
 Di aplikasi iOS (**UDIN EXTERNAL IOS**), server URL diatur pada `LicenseManager.swift`:
 ```swift
-static let defaultServerURL = "https://your-server.vercel.app"
+static let defaultServerURL = "https://udinexternalios.vercel.app"
 ```
