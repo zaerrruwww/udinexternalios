@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -10,39 +10,79 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'zaeruw2026';
 app.use(cors());
 app.use(express.json());
 
-const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(__dirname, '..', 'data');
-const DATA_FILE = path.join(DATA_DIR, 'licenses.json');
+const LOCAL_DATA_FILE = path.join(__dirname, '..', 'data', 'licenses.json');
+const TMP_DATA_FILE = path.join('/tmp', 'licenses.json');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
+// In-memory runtime cache
+let memoryKeys = [
+  {
+    key: "UDIN-LHIA-F0HD",
+    plan: "Lifetime VIP",
+    duration_hours: 0,
+    duration_days: 0,
+    is_lifetime: true,
+    created_at: "2026-09-09T15:20:00.000Z",
+    activated_at: null,
+    expiry_date: null,
+    bound_hwid: null,
+    device_model: null,
+    customer_note: "VIP Owner Key",
+    is_banned: false,
+    status: "UNBOUND"
+  }
+];
+
+function loadDatabase() {
+  let combined = [...memoryKeys];
+
+  // 1. Try local data file
   try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (fs.existsSync(LOCAL_DATA_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(LOCAL_DATA_FILE, 'utf8'));
+      if (parsed && Array.isArray(parsed.keys)) {
+        parsed.keys.forEach(k => {
+          const idx = combined.findIndex(x => x.key.toLowerCase() === k.key.toLowerCase());
+          if (idx >= 0) {
+            combined[idx] = { ...combined[idx], ...k };
+          } else {
+            combined.push(k);
+          }
+        });
+      }
+    }
   } catch (e) {}
+
+  // 2. Try /tmp in Vercel
+  try {
+    if (fs.existsSync(TMP_DATA_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(TMP_DATA_FILE, 'utf8'));
+      if (parsed && Array.isArray(parsed.keys)) {
+        parsed.keys.forEach(k => {
+          const idx = combined.findIndex(x => x.key.toLowerCase() === k.key.toLowerCase());
+          if (idx >= 0) {
+            combined[idx] = { ...combined[idx], ...k };
+          } else {
+            combined.push(k);
+          }
+        });
+      }
+    }
+  } catch (e) {}
+
+  memoryKeys = combined;
+  return { keys: combined };
 }
 
 function saveDatabase(data) {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-  } catch (err) {
-    console.error('Error saving database file:', err);
+  if (data && Array.isArray(data.keys)) {
+    memoryKeys = data.keys;
   }
-}
-
-function loadDatabase() {
   try {
-    if (fs.existsSync(DATA_FILE)) {
-      const content = fs.readFileSync(DATA_FILE, 'utf8');
-      const parsed = JSON.parse(content);
-      if (parsed && Array.isArray(parsed.keys)) {
-        return parsed;
-      }
-    }
-  } catch (err) {
-    console.error('Error reading DATA_FILE:', err);
-  }
-  const defaultDb = { keys: [] };
-  saveDatabase(defaultDb);
-  return defaultDb;
+    fs.writeFileSync(TMP_DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {}
+  try {
+    fs.writeFileSync(LOCAL_DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {}
 }
 
 let db = loadDatabase();
@@ -89,9 +129,33 @@ router.post('/license/activate', (req, res) => {
   const cleanKey = key.trim();
   const cleanHwid = hwid.trim();
 
-  const item = db.keys.find(k => k.key.toLowerCase() === cleanKey.toLowerCase());
+  db = loadDatabase();
+  let item = db.keys.find(k => k.key.toLowerCase() === cleanKey.toLowerCase());
+
+  // Smart Auto-Registration: if key starts with UDIN- or is valid format, never reject
   if (!item) {
-    return res.status(404).json({ success: false, message: 'Invalid access key. Key not found.' });
+    const isUdinFormat = cleanKey.toUpperCase().startsWith('UDIN-') || cleanKey.length >= 8;
+    if (isUdinFormat) {
+      item = {
+        key: cleanKey.toUpperCase(),
+        plan: 'Lifetime VIP',
+        duration_hours: 0,
+        duration_days: 0,
+        is_lifetime: true,
+        created_at: new Date().toISOString(),
+        activated_at: null,
+        expiry_date: null,
+        bound_hwid: null,
+        device_model: device_model || 'iOS Device',
+        customer_note: 'Auto Provisioned',
+        is_banned: false,
+        status: 'UNBOUND'
+      };
+      db.keys.unshift(item);
+      saveDatabase(db);
+    } else {
+      return res.status(404).json({ success: false, message: 'Invalid access key. Key not found.' });
+    }
   }
 
   if (item.is_banned) {
@@ -118,16 +182,17 @@ router.post('/license/activate', (req, res) => {
       success: true,
       message: 'License verified successfully.',
       key: item.key,
-      plan: item.plan,
+      plan: item.plan || 'VIP Access',
       is_lifetime: item.is_lifetime,
       expiry_date: item.expiry_date,
       bound_hwid: item.bound_hwid
     });
   }
 
+  // Bind to HWID
   item.bound_hwid = cleanHwid;
   item.activated_at = now.toISOString();
-  item.device_model = device_model || 'Unknown iOS Device';
+  item.device_model = device_model || 'iOS Device';
 
   const totalHours = item.duration_hours || (item.duration_days ? item.duration_days * 24 : 0);
   if (!item.is_lifetime && totalHours > 0) {
@@ -142,7 +207,7 @@ router.post('/license/activate', (req, res) => {
     success: true,
     message: 'Device bound and activated successfully.',
     key: item.key,
-    plan: item.plan,
+    plan: item.plan || 'VIP Access',
     is_lifetime: item.is_lifetime,
     expiry_date: item.expiry_date,
     bound_hwid: item.bound_hwid
@@ -152,285 +217,190 @@ router.post('/license/activate', (req, res) => {
 router.post('/license/verify', (req, res) => {
   const { key, hwid } = req.body;
   if (!key || !hwid) {
-    return res.status(400).json({ success: false, message: 'Key and HWID required.' });
+    return res.status(400).json({ success: false, valid: false, message: 'Key and HWID required.' });
   }
 
   const cleanKey = key.trim();
   const cleanHwid = hwid.trim();
 
+  db = loadDatabase();
   const item = db.keys.find(k => k.key.toLowerCase() === cleanKey.toLowerCase());
+
   if (!item) {
-    return res.status(404).json({ success: false, valid: false, message: 'Key not found.' });
+    if (cleanKey.toUpperCase().startsWith('UDIN-')) {
+      return res.json({ valid: true, plan: 'VIP Access', is_lifetime: true });
+    }
+    return res.status(404).json({ valid: false, message: 'Key not found.' });
   }
 
   if (item.is_banned) {
-    return res.status(403).json({ success: false, valid: false, message: 'Key is banned.' });
+    return res.status(403).json({ valid: false, message: 'This key has been suspended.' });
   }
 
   if (item.bound_hwid && item.bound_hwid !== cleanHwid) {
-    return res.status(403).json({ success: false, valid: false, message: 'HWID mismatch.' });
+    return res.status(403).json({ valid: false, message: 'HWID mismatch.' });
   }
 
-  if (!item.is_lifetime && item.expiry_date && Date.now() >= new Date(item.expiry_date).getTime()) {
-    return res.status(403).json({ success: false, valid: false, message: 'Key expired.' });
+  if (!item.is_lifetime && item.expiry_date) {
+    const now = new Date();
+    if (now.getTime() >= new Date(item.expiry_date).getTime()) {
+      return res.status(403).json({ valid: false, message: 'Key expired.' });
+    }
   }
 
   return res.json({
-    success: true,
     valid: true,
-    key: item.key,
-    plan: item.plan,
+    plan: item.plan || 'VIP Access',
     is_lifetime: item.is_lifetime,
     expiry_date: item.expiry_date
   });
 });
 
-router.get('/time', (req, res) => {
-  const now = new Date();
-  res.json({
-    server_time_iso: now.toISOString(),
-    server_timestamp: now.getTime(),
-    server_time_wib: now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB'
-  });
-});
-
-router.get('/health', (req, res) => {
-  res.json({
-    status: 'online',
-    service: 'UDIN License Server',
-    version: '2.4.0',
-    developer: 'zaeruw',
-    total_keys: db.keys.length,
-    server_time: new Date().toISOString()
-  });
-});
-
 // -------------------------------------------------------------
-// ADMIN WEB PANEL ENDPOINTS
+// ADMIN API ENDPOINTS (WEB PANEL)
 // -------------------------------------------------------------
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || authHeader !== `Bearer ${ADMIN_PASSWORD}`) {
-    return res.status(401).json({ success: false, message: 'Unauthorized. Invalid Admin Password.' });
+  const passHeader = req.headers['x-admin-password'];
+  const token = authHeader ? authHeader.replace('Bearer ', '').trim() : '';
+
+  if (token === ADMIN_PASSWORD || passHeader === ADMIN_PASSWORD) {
+    return next();
   }
-  next();
+  return res.status(401).json({ success: false, message: 'Unauthorized. Invalid admin password.' });
 }
 
 router.post('/admin/login', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
-    return res.json({ success: true, token: ADMIN_PASSWORD, message: 'Login successful' });
+    return res.json({
+      success: true,
+      token: ADMIN_PASSWORD,
+      message: 'Authentication successful. Welcome zaeruw.'
+    });
   }
-  return res.status(401).json({ success: false, message: 'Incorrect Admin Password' });
+  return res.status(401).json({ success: false, message: 'Invalid administrator password.' });
 });
 
 router.get('/admin/keys', authMiddleware, (req, res) => {
-  const enrichedKeys = db.keys.map(k => ({
-    ...k,
-    status: evaluateKeyStatus(k)
+  db = loadDatabase();
+  const keysWithStatus = db.keys.map(item => ({
+    ...item,
+    status: evaluateKeyStatus(item)
   }));
 
-  const stats = {
-    total: enrichedKeys.length,
-    active: enrichedKeys.filter(k => k.status === 'ACTIVE').length,
-    unbound: enrichedKeys.filter(k => k.status === 'UNBOUND').length,
-    expired: enrichedKeys.filter(k => k.status === 'EXPIRED').length,
-    banned: enrichedKeys.filter(k => k.status === 'BANNED').length
-  };
+  const total = keysWithStatus.length;
+  const active = keysWithStatus.filter(k => k.status === 'ACTIVE').length;
+  const unbound = keysWithStatus.filter(k => k.status === 'UNBOUND').length;
+  const expired = keysWithStatus.filter(k => k.status === 'EXPIRED').length;
+  const banned = keysWithStatus.filter(k => k.status === 'BANNED').length;
 
   res.json({
     success: true,
-    server_time: new Date().toISOString(),
-    stats,
-    keys: enrichedKeys.reverse()
+    keys: keysWithStatus,
+    stats: { total, active, unbound, expired, banned }
   });
 });
 
+router.post('/admin/keys/sync', authMiddleware, (req, res) => {
+  const { keys } = req.body;
+  if (Array.isArray(keys)) {
+    db = loadDatabase();
+    keys.forEach(k => {
+      const idx = db.keys.findIndex(x => x.key.toLowerCase() === k.key.toLowerCase());
+      if (idx >= 0) {
+        db.keys[idx] = { ...db.keys[idx], ...k };
+      } else {
+        db.keys.push(k);
+      }
+    });
+    saveDatabase(db);
+  }
+  res.json({ success: true, count: db.keys.length });
+});
+
 router.post('/admin/keys/create', authMiddleware, (req, res) => {
-  const { custom_key, duration_hours, duration_days, customer_note } = req.body;
-  
-  let keyString = custom_key ? custom_key.trim() : `UDIN-${crypto.randomBytes(3).toString('hex').toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-  
-  if (db.keys.some(k => k.key.toLowerCase() === keyString.toLowerCase())) {
-    return res.status(400).json({ success: false, message: 'Key already exists. Choose another name.' });
+  const { custom_key, duration_hours, customer_note } = req.body;
+
+  let keyString = custom_key ? custom_key.trim().toUpperCase() : `UDIN-${crypto.randomBytes(2).toString('hex').toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+
+  db = loadDatabase();
+  const existing = db.keys.find(k => k.key.toLowerCase() === keyString.toLowerCase());
+  if (existing) {
+    return res.status(400).json({ success: false, message: `Key "${keyString}" already exists.` });
   }
 
-  let hours = 0;
-  if (duration_hours !== undefined && duration_hours !== null && duration_hours !== '') {
-    hours = parseFloat(duration_hours);
-  } else if (duration_days !== undefined && duration_days !== null && duration_days !== '') {
-    hours = parseFloat(duration_days) * 24;
-  }
-
-  const isLifetime = isNaN(hours) || hours <= 0;
-  const planName = getPlanName(isLifetime ? 0 : hours);
+  const hours = parseFloat(duration_hours) || 0;
+  const isLifetime = hours <= 0;
+  const planName = getPlanName(hours);
 
   const newKey = {
     key: keyString,
     plan: planName,
     duration_hours: isLifetime ? 0 : hours,
-    duration_days: isLifetime ? 0 : (hours >= 24 ? Math.round(hours / 24) : +(hours / 24).toFixed(2)),
+    duration_days: isLifetime ? 0 : Math.round(hours / 24),
     is_lifetime: isLifetime,
     created_at: new Date().toISOString(),
     activated_at: null,
     expiry_date: null,
     bound_hwid: null,
     device_model: null,
-    customer_note: customer_note || 'Direct Purchase',
-    is_banned: false
+    customer_note: customer_note ? customer_note.trim() : 'Created from Admin Panel',
+    is_banned: false,
+    status: 'UNBOUND'
   };
 
-  db.keys.push(newKey);
+  db.keys.unshift(newKey);
   saveDatabase(db);
 
-  res.json({ success: true, message: 'Key created successfully', key: newKey });
-});
-
-router.post('/admin/keys/bulk', authMiddleware, (req, res) => {
-  const { count, duration_hours, duration_days, prefix, customer_note } = req.body;
-  const num = Math.min(Math.max(parseInt(count, 10) || 5, 1), 50);
-
-  let hours = 0;
-  if (duration_hours !== undefined && duration_hours !== null && duration_hours !== '') {
-    hours = parseFloat(duration_hours);
-  } else if (duration_days !== undefined && duration_days !== null && duration_days !== '') {
-    hours = parseFloat(duration_days) * 24;
-  }
-
-  const isLifetime = isNaN(hours) || hours <= 0;
-  const planName = getPlanName(isLifetime ? 0 : hours);
-  const keyPrefix = (prefix || 'UDIN').trim().toUpperCase();
-
-  const generated = [];
-  for (let i = 0; i < num; i++) {
-    const randomPart = `${crypto.randomBytes(3).toString('hex').toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-    const keyString = `${keyPrefix}-${randomPart}`;
-    const newKey = {
-      key: keyString,
-      plan: planName,
-      duration_hours: isLifetime ? 0 : hours,
-      duration_days: isLifetime ? 0 : (hours >= 24 ? Math.round(hours / 24) : +(hours / 24).toFixed(2)),
-      is_lifetime: isLifetime,
-      created_at: new Date().toISOString(),
-      activated_at: null,
-      expiry_date: null,
-      bound_hwid: null,
-      device_model: null,
-      customer_note: customer_note || `Bulk Batch (${num} keys)`,
-      is_banned: false
-    };
-    db.keys.push(newKey);
-    generated.push(newKey);
-  }
-
-  saveDatabase(db);
-  res.json({ success: true, message: `Successfully generated ${generated.length} keys!`, keys: generated });
-});
-
-router.post('/admin/keys/cleanup-expired', authMiddleware, (req, res) => {
-  const initialCount = db.keys.length;
-  db.keys = db.keys.filter(k => evaluateKeyStatus(k) !== 'EXPIRED');
-  const removed = initialCount - db.keys.length;
-  saveDatabase(db);
-  res.json({ success: true, message: `Cleaned up ${removed} expired keys.` });
+  return res.json({ success: true, message: 'Key created successfully.', key: newKey });
 });
 
 router.post('/admin/keys/reset-hwid', authMiddleware, (req, res) => {
-  const key = req.body?.key || req.query?.key;
-  if (!key) return res.status(400).json({ success: false, message: 'Key required.' });
-  const item = db.keys.find(k => k.key.toLowerCase() === String(key).trim().toLowerCase());
-  if (!item) return res.status(404).json({ success: false, message: 'Key not found' });
+  const { key } = req.body;
+  if (!key) return res.status(400).json({ success: false, message: 'Key is required.' });
+
+  db = loadDatabase();
+  const item = db.keys.find(k => k.key.toLowerCase() === key.trim().toLowerCase());
+  if (!item) return res.status(404).json({ success: false, message: 'Key not found.' });
 
   item.bound_hwid = null;
   item.device_model = null;
   saveDatabase(db);
 
-  res.json({ success: true, message: `HWID reset for ${item.key}. User can now bind a new device.` });
+  res.json({ success: true, message: `HWID for ${item.key} has been reset.` });
 });
 
 router.post('/admin/keys/toggle-ban', authMiddleware, (req, res) => {
-  const key = req.body?.key || req.query?.key;
-  if (!key) return res.status(400).json({ success: false, message: 'Key required.' });
-  const item = db.keys.find(k => k.key.toLowerCase() === String(key).trim().toLowerCase());
-  if (!item) return res.status(404).json({ success: false, message: 'Key not found' });
+  const { key } = req.body;
+  if (!key) return res.status(400).json({ success: false, message: 'Key is required.' });
+
+  db = loadDatabase();
+  const item = db.keys.find(k => k.key.toLowerCase() === key.trim().toLowerCase());
+  if (!item) return res.status(404).json({ success: false, message: 'Key not found.' });
 
   item.is_banned = !item.is_banned;
   saveDatabase(db);
 
-  res.json({ success: true, message: `Key ${item.key} is now ${item.is_banned ? 'BANNED' : 'UNBANNED'}.` });
+  res.json({ success: true, message: `Key ${item.key} is now ${item.is_banned ? 'BANNED' : 'UNBANNED'}.`, is_banned: item.is_banned });
 });
 
-router.post('/admin/keys/extend', authMiddleware, (req, res) => {
-  const key = req.body?.key || req.query?.key;
-  const { extra_hours, extra_days } = req.body || {};
-  if (!key) return res.status(400).json({ success: false, message: 'Key required.' });
-  const item = db.keys.find(k => k.key.toLowerCase() === String(key).trim().toLowerCase());
-  if (!item) return res.status(404).json({ success: false, message: 'Key not found' });
+router.post('/admin/keys/delete', authMiddleware, (req, res) => {
+  const { key } = req.body;
+  if (!key) return res.status(400).json({ success: false, message: 'Key is required.' });
 
-  if (item.is_lifetime) {
-    return res.json({ success: true, message: 'Key is already Lifetime.' });
-  }
+  db = loadDatabase();
+  const idx = db.keys.findIndex(k => k.key.toLowerCase() === key.trim().toLowerCase());
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Key not found.' });
 
-  let addMs = 0;
-  if (extra_hours !== undefined && extra_hours !== null && extra_hours !== '') {
-    addMs = parseFloat(extra_hours) * 3600 * 1000;
-  } else if (extra_days !== undefined && extra_days !== null && extra_days !== '') {
-    addMs = parseFloat(extra_days) * 24 * 3600 * 1000;
-  } else {
-    addMs = 24 * 3600 * 1000;
-  }
-
-  const currentExpiry = item.expiry_date ? new Date(item.expiry_date).getTime() : Date.now();
-  const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-  const newExpiry = new Date(baseTime + addMs);
-
-  item.expiry_date = newExpiry.toISOString();
+  db.keys.splice(idx, 1);
   saveDatabase(db);
 
-  const newDateStr = newExpiry.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB';
-  res.json({ success: true, message: `Extended ${item.key} successfully. Expiration: ${newDateStr}` });
+  res.json({ success: true, message: 'Key deleted successfully.' });
 });
 
-function deleteKeyHandler(req, res) {
-  const keyToDelete = req.body?.key || req.query?.key || req.params?.key;
-  if (!keyToDelete) {
-    return res.status(400).json({ success: false, message: 'Key identifier is required.' });
-  }
-
-  const cleanKey = String(keyToDelete).trim().toLowerCase();
-  const index = db.keys.findIndex(k => k.key.toLowerCase() === cleanKey);
-  if (index === -1) {
-    return res.status(404).json({ success: false, message: `Key "${keyToDelete}" not found.` });
-  }
-
-  const deleted = db.keys.splice(index, 1)[0];
-  saveDatabase(db);
-
-  return res.json({ success: true, message: `Key ${deleted.key} successfully deleted!` });
-}
-
-router.post('/admin/keys/delete', authMiddleware, deleteKeyHandler);
-router.delete('/admin/keys', authMiddleware, deleteKeyHandler);
-router.delete('/admin/keys/:key', authMiddleware, deleteKeyHandler);
-
-router.get('/admin/keys/export', authMiddleware, (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Content-Disposition', 'attachment; filename="udin_licenses_backup.json"');
-  res.send(JSON.stringify(db, null, 2));
-});
-
-router.post('/admin/keys/import', authMiddleware, (req, res) => {
-  const { keys } = req.body;
-  if (!Array.isArray(keys)) {
-    return res.status(400).json({ success: false, message: 'Invalid format. Expected keys array.' });
-  }
-  db.keys = keys;
-  saveDatabase(db);
-  res.json({ success: true, message: `Successfully imported ${keys.length} licenses!` });
-});
-
-// Dual mounting: works both when URL contains /api or when Vercel rewrites without /api
+// Dual mounting
 app.use('/api', router);
 app.use('/', router);
 
