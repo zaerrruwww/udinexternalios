@@ -1,14 +1,14 @@
-# 🚀 UDIN LICENSE WEB ADMIN PANEL
+# 🚀 UDIN LICENSE SERVER & DASHBOARD
 
-Ultra-modern, cloud-ready Web Admin Dashboard & REST API server to generate, manage, bind, and expire license keys for **UDIN EXTERNAL IOS**.
+Ultra-modern, cloud-ready License Server & Management Dashboard to generate, manage, bind, and expire license keys for **UDIN EXTERNAL IOS**.
 
 ---
 
 ## ⚡ Quick Start (Local PC)
 
-1. Buka folder `web-admin-panel` di terminal / PowerShell:
+1. Buka folder `udin-server` di terminal / PowerShell:
    ```bash
-   cd web-admin-panel
+   cd udin-server
    npm install
    npm start
    ```
@@ -21,23 +21,21 @@ Ultra-modern, cloud-ready Web Admin Dashboard & REST API server to generate, man
 
 ### Opsi 1: Vercel (1-Click Free Deploy)
 1. Buat akun di [Vercel](https://vercel.com).
-2. Upload folder `web-admin-panel` ke GitHub atau deploy via Vercel CLI:
-   ```bash
-   npm i -g vercel
-   vercel
-   ```
-3. Set environment variable: `ADMIN_PASSWORD = password_rahasia_anda`
+2. Import repository `udinexternalios` di Vercel Dashboard.
+3. Set **Root Directory** ke `udin-server`.
+4. Set environment variable (opsional): `ADMIN_PASSWORD = password_rahasia_anda`
 
 ### Opsi 2: Render.com (Gratis & Mendukung Disk Persisten)
 1. Buat akun di [Render.com](https://render.com).
 2. Pilih **New Web Service**, pilih repo GitHub.
-3. Build Command: `npm install`
-4. Start Command: `npm start`
+3. Root Directory: `udin-server`
+4. Build Command: `npm install`
+5. Start Command: `npm start`
 
 ---
 
 ## 📱 Hubungkan dengan Aplikasi iOS
 Di aplikasi iOS (**UDIN EXTERNAL IOS**), server URL diatur pada `LicenseManager.swift`:
 ```swift
-static let defaultServerURL = "https://your-panel.vercel.app"
+static let defaultServerURL = "https://your-server.vercel.app"
 ```

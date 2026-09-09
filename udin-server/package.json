@@ -1,7 +1,7 @@
 {
-  "name": "udin-license-panel",
+  "name": "udin-license-server",
   "version": "2.4.0",
-  "description": "Ultra-Modern Web Admin Panel & License Server for UDIN EXTERNAL IOS",
+  "description": "Ultra-Modern License Server & Dashboard for UDIN EXTERNAL IOS",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
