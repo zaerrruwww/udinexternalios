@@ -107,14 +107,8 @@ module.exports = async (req, res) => {
 
   const now = new Date();
 
-  if (item.bound_hwid) {
-    if (item.bound_hwid !== cleanHwid) {
-      return res.status(403).json({
-        success: false,
-        message: 'Key is already bound to another device. Contact admin to reset HWID.'
-      });
-    }
-
+  // If already bound to this device, verify
+  if (item.bound_hwid && item.bound_hwid === cleanHwid) {
     if (!item.is_lifetime && item.expiry_date) {
       if (now.getTime() >= new Date(item.expiry_date).getTime()) {
         return res.status(403).json({ success: false, message: 'This access key has expired.' });
@@ -132,13 +126,13 @@ module.exports = async (req, res) => {
     });
   }
 
-  // Bind HWID
+  // Bind to new HWID (Rebinds cleanly)
   item.bound_hwid = cleanHwid;
-  item.activated_at = now.toISOString();
+  item.activated_at = item.activated_at || now.toISOString();
   item.device_model = device_model || 'iOS Device';
 
   const totalHours = item.duration_hours || (item.duration_days ? item.duration_days * 24 : 0);
-  if (!item.is_lifetime && totalHours > 0) {
+  if (!item.is_lifetime && totalHours > 0 && !item.expiry_date) {
     const expiryMs = now.getTime() + totalHours * 3600 * 1000;
     const expiry = new Date(expiryMs);
     item.expiry_date = expiry.toISOString();
