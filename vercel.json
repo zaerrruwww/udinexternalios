@@ -1,8 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/license/(.*)", "destination": "/api/index.js" },
-    { "source": "/admin/(.*)", "destination": "/api/index.js" }
+    { "source": "/license/:path*", "destination": "/api/license/:path*" }
   ],
   "headers": [
     {
