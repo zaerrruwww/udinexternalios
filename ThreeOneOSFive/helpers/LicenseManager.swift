@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import Security
 import UIKit
@@ -20,7 +21,8 @@ final class LicenseManager: ObservableObject {
     private let planAccount = "license-plan"
     private let expiryAccount = "license-expiry"
     private var lastAttemptAt: Date?
-    private var heartbeatTask: Task<Void, Never>?
+    private var heartbeatTimer: Timer?
+    private var isVerifying = false
 
     var deviceHWID: String {
         if let vendorId = UIDevice.current.identifierForVendor?.uuidString {
@@ -40,7 +42,6 @@ final class LicenseManager: ObservableObject {
     private func checkSavedState() {
         guard let savedKey = string(for: keyAccount) else {
             isActive = false
-            stopHeartbeat()
             return
         }
         
@@ -53,9 +54,7 @@ final class LicenseManager: ObservableObject {
             expirationDate = exp
             isLifetime = false
             if Date() > exp {
-                isActive = false
-                message = "License has expired"
-                stopHeartbeat()
+                revokeSession(reason: "License expired")
                 return
             }
         } else {
@@ -64,7 +63,6 @@ final class LicenseManager: ObservableObject {
         }
         
         isActive = true
-        startHeartbeat()
     }
 
     var hasRememberedKey: Bool {
@@ -77,31 +75,37 @@ final class LicenseManager: ObservableObject {
 
     func beginLaunchSession() {
         checkSavedState()
-        message = isActive ? "Ready to use" : "Key required - enter your access key"
-        
-        if isActive, let key = rememberedKey() {
-            silentVerify(key: key)
+        if isActive {
+            verifyCurrentSession { [weak self] valid in
+                guard let self else { return }
+                if valid {
+                    self.message = "Ready to use"
+                    self.startRealtimeHeartbeat()
+                }
+            }
+        } else {
+            message = "Key required - enter your access key"
         }
     }
 
-    func startHeartbeat() {
-        stopHeartbeat()
-        heartbeatTask = Task { @MainActor [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 8_000_000_000)
-                guard let self = self, self.isActive, let key = self.rememberedKey() else { break }
-                self.silentVerify(key: key)
+    func startRealtimeHeartbeat() {
+        stopRealtimeHeartbeat()
+        guard isActive, rememberedKey() != nil else { return }
+        
+        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.verifyCurrentSession()
             }
         }
     }
 
-    func stopHeartbeat() {
-        heartbeatTask?.cancel()
-        heartbeatTask = nil
+    func stopRealtimeHeartbeat() {
+        heartbeatTimer?.invalidate()
+        heartbeatTimer = nil
     }
 
     func activate(key: String) {
-        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isBusy else { return }
         if let lastAttemptAt, Date().timeIntervalSince(lastAttemptAt) < 1 {
             message = "Please wait a moment before trying again"
@@ -132,24 +136,27 @@ final class LicenseManager: ObservableObject {
 
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
-            do {
-                let (data, response) = try await URLSession.shared.data(for: request)
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                guard let self else { return }
                 self.isBusy = false
-                let httpResponse = response as? HTTPURLResponse
-                let statusCode = httpResponse?.statusCode ?? 200
 
-                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                if let error {
                     self.isActive = false
-                    self.message = "Invalid response from server"
+                    self.message = "Connection error: \(error.localizedDescription)"
+                    return
+                }
+
+                guard let data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    self.isActive = false
+                    self.message = "Invalid response from license server"
                     return
                 }
 
                 let success = json["success"] as? Bool ?? false
-                let serverMessage = json["message"] as? String ?? "Activation response received"
+                let serverMessage = json["message"] as? String ?? "Unknown response"
 
-                if success && statusCode == 200 {
+                if success {
                     self.isActive = true
                     let plan = json["plan"] as? String ?? "VIP Access"
                     let lifetime = json["is_lifetime"] as? Bool ?? false
@@ -174,22 +181,26 @@ final class LicenseManager: ObservableObject {
                         self.save(trimmed, for: self.keyAccount)
                         self.save(plan, for: self.planAccount)
                     }
-                    self.startHeartbeat()
+                    self.startRealtimeHeartbeat()
                 } else {
-                    self.isActive = false
-                    self.message = serverMessage
-                    self.stopHeartbeat()
+                    self.revokeSession(reason: serverMessage)
                 }
-            } catch {
-                self.isBusy = false
-                self.isActive = false
-                self.message = "Connection error: \(error.localizedDescription)"
             }
-        }
+        }.resume()
     }
 
-    func silentVerify(key: String) {
-        guard let endpoint = URL(string: "\(serverURL)/api/license/verify") else { return }
+    func verifyCurrentSession(completion: ((Bool) -> Void)? = nil) {
+        guard let key = rememberedKey(), !isVerifying else {
+            completion?(isActive)
+            return
+        }
+        
+        guard let endpoint = URL(string: "\(serverURL)/api/license/verify") else {
+            completion?(isActive)
+            return
+        }
+        
+        isVerifying = true
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -201,29 +212,39 @@ final class LicenseManager: ObservableObject {
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
-            do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-                let httpResponse = response as? HTTPURLResponse
-                let statusCode = httpResponse?.statusCode ?? 200
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isVerifying = false
 
-                if statusCode == 401 || statusCode == 403 || statusCode == 404 {
-                    var errorReason = "License revoked or deleted by admin"
-                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let msg = json["message"] as? String {
-                        errorReason = msg
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 404 || httpResponse.statusCode == 403 {
+                    var errorMsg = "Access revoked: License key has been deleted or disabled by admin."
+                    if let data,
+                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let serverMsg = json["message"] as? String {
+                        errorMsg = serverMsg
                     }
-                    self.revokeAccess(reason: errorReason)
+                    self.revokeSession(reason: errorMsg)
+                    completion?(false)
                     return
                 }
 
-                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+                guard let data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    if let exp = self.expirationDate, Date() > exp {
+                        self.revokeSession(reason: "License expired")
+                        completion?(false)
+                    } else {
+                        completion?(self.isActive)
+                    }
+                    return
+                }
 
                 let valid = json["valid"] as? Bool ?? false
                 if !valid {
-                    let msg = json["message"] as? String ?? "License revoked by server"
-                    self.revokeAccess(reason: msg)
+                    let serverMsg = json["message"] as? String ?? "License key is no longer valid."
+                    self.revokeSession(reason: serverMsg)
+                    completion?(false)
                 } else {
                     if let plan = json["plan"] as? String {
                         self.planName = plan
@@ -231,20 +252,33 @@ final class LicenseManager: ObservableObject {
                     if let lifetime = json["is_lifetime"] as? Bool {
                         self.isLifetime = lifetime
                     }
+                    if let expiryDateStr = json["expiry_date"] as? String {
+                        let formatter = ISO8601DateFormatter()
+                        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                        let date = formatter.date(from: expiryDateStr) ?? ISO8601DateFormatter().date(from: expiryDateStr)
+                        self.expirationDate = date
+                        if let exp = date, Date() > exp {
+                            self.revokeSession(reason: "License expired")
+                            completion?(false)
+                            return
+                        }
+                    }
+                    self.isActive = true
+                    completion?(true)
                 }
-            } catch {
-                // Network error on background heartbeat: do not disrupt user if offline momentarily
             }
-        }
+        }.resume()
     }
 
-    private func revokeAccess(reason: String) {
+    func revokeSession(reason: String) {
+        stopRealtimeHeartbeat()
         isActive = false
         message = reason
+        expirationDate = nil
+        isLifetime = false
         delete(keyAccount)
         delete(planAccount)
         delete(expiryAccount)
-        stopHeartbeat()
     }
 
     func rememberedKey() -> String? { string(for: keyAccount) }
@@ -255,13 +289,7 @@ final class LicenseManager: ObservableObject {
     }
 
     func deactivate() {
-        delete(keyAccount)
-        delete(planAccount)
-        delete(expiryAccount)
-        isActive = false
-        expirationDate = nil
-        message = "Activation removed from this device"
-        stopHeartbeat()
+        revokeSession(reason: "Activation removed from this device")
     }
 
     private func string(for account: String) -> String? {

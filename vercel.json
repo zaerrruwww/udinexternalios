@@ -1,19 +1,18 @@
-{
-  "rewrites": [
-    { "source": "/api/admin/keys/:path*", "destination": "/api/admin/keys" },
-    { "source": "/api/admin/:path*", "destination": "/api/admin/:path*" },
-    { "source": "/api/license/:path*", "destination": "/api/license/:path*" },
-    { "source": "/license/:path*", "destination": "/api/license/:path*" }
-  ],
-  "headers": [
+﻿{
+  "version": 2,
+  "builds": [
     {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, DELETE, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, x-admin-password" }
-      ]
+      "src": "web-admin-panel/server.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["web-admin-panel/public/**", "web-admin-panel/data/**"]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "web-admin-panel/server.js"
     }
   ]
 }

@@ -1,10 +1,9 @@
 {
-  "name": "udin-license-server",
+  "name": "zryx-license-panel",
   "version": "2.4.0",
-  "description": "Ultra-Modern License Server & Dashboard for UDIN EXTERNAL IOS",
+  "description": "Ultra-Modern Web Admin Panel & License Server for ZRYX EXTERNAL IOS",
   "main": "server.js",
   "scripts": {
-    "build": "node -e \"console.log('Build successful')\"",
     "start": "node server.js",
     "dev": "node server.js"
   },
