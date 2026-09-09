@@ -628,6 +628,33 @@
       if (tabId === 'tabCreate') generateRandomKeyName();
     }
 
+    async function apiCall(endpoint, options = {}) {
+      let res = await fetch(endpoint, options);
+      if (res.status === 404) {
+        const flat = endpoint
+          .replace('/api/admin/keys/create', '/api/admin-keys-create')
+          .replace('/api/admin/keys/bulk', '/api/admin-keys-bulk')
+          .replace('/api/admin/keys/reset-hwid', '/api/admin-keys-reset-hwid')
+          .replace('/api/admin/keys/toggle-ban', '/api/admin-keys-toggle-ban')
+          .replace('/api/admin/keys/extend', '/api/admin-keys-extend')
+          .replace('/api/admin/keys/delete', '/api/admin-keys-delete')
+          .replace('/api/admin/keys/cleanup-expired', '/api/admin-keys-cleanup')
+          .replace('/api/admin/keys/export', '/api/admin-keys-export')
+          .replace('/api/admin/keys/import', '/api/admin-keys-import')
+          .replace('/api/admin/keys', '/api/admin-keys')
+          .replace('/api/admin/login', '/api/login')
+          .replace('/api/license/activate', '/api/activate')
+          .replace('/api/license/verify', '/api/verify');
+        if (flat !== endpoint) {
+          res = await fetch(flat, options);
+        }
+      }
+      if (res.status === 404 && endpoint.includes('/admin/login')) {
+        res = await fetch('/api/admin-login', options);
+      }
+      return res;
+    }
+
     async function handleLogin(e) {
       e.preventDefault();
       const password = document.getElementById('adminPasswordInput').value;
@@ -635,18 +662,11 @@
       btn.disabled = true;
       btn.innerHTML = 'AUTHENTICATING…';
       try {
-        let res = await fetch('/api/admin/login', {
+        const res = await apiCall('/api/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password })
         });
-        if (res.status === 404) {
-          res = await fetch('/admin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
-          });
-        }
         const data = await res.json().catch(() => ({ success: false, message: `Server HTTP ${res.status}` }));
         if (data.success) {
           authToken = data.token;
@@ -673,7 +693,7 @@
 
     async function fetchKeys(isManualRefresh) {
       try {
-        const res = await fetch('/api/admin/keys', {
+        const res = await apiCall('/api/admin/keys', {
           headers: { 'Authorization': 'Bearer ' + authToken }
         });
         if (res.status === 401) { handleLogout(); return; }
@@ -898,7 +918,7 @@
       const duration_hours = document.getElementById('durationHoursSelect').value;
       const customer_note = document.getElementById('customerNoteInput').value;
       try {
-        const res = await fetch('/api/admin/keys/create', {
+        const res = await apiCall('/api/admin/keys/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ custom_key, duration_hours, customer_note })
@@ -926,7 +946,7 @@
       const prefix = document.getElementById('bulkPrefix').value;
       const customer_note = document.getElementById('bulkNote').value;
       try {
-        const res = await fetch('/api/admin/keys/bulk', {
+        const res = await apiCall('/api/admin/keys/bulk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ count, duration_hours, prefix, customer_note })
@@ -991,7 +1011,7 @@
     async function resetHwid(key) {
       if (!confirm('Reset HWID for key ' + key + '?\n\nUser will be able to bind a new iPhone.')) return;
       try {
-        const res = await fetch('/api/admin/keys/reset-hwid', {
+        const res = await apiCall('/api/admin/keys/reset-hwid', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ key })
@@ -1006,7 +1026,7 @@
 
     async function extendKey(key, extraHours) {
       try {
-        const res = await fetch('/api/admin/keys/extend', {
+        const res = await apiCall('/api/admin/keys/extend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ key, extra_hours: extraHours })
@@ -1021,7 +1041,7 @@
 
     async function toggleBan(key) {
       try {
-        const res = await fetch('/api/admin/keys/toggle-ban', {
+        const res = await apiCall('/api/admin/keys/toggle-ban', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ key })
@@ -1037,7 +1057,7 @@
     async function deleteKey(key) {
       if (!confirm('Hapus permanen key ' + key + '?')) return;
       try {
-        const res = await fetch('/api/admin/keys/delete', {
+        const res = await apiCall('/api/admin/keys/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ key: key })
@@ -1057,7 +1077,7 @@
     async function handleCleanupExpired() {
       if (!confirm('Clean all EXPIRED keys from database?')) return;
       try {
-        const res = await fetch('/api/admin/keys/cleanup-expired', {
+        const res = await apiCall('/api/admin/keys/cleanup-expired', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         });

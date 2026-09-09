@@ -2,6 +2,6 @@ const app = require('./index');
 module.exports = (req, res) => {
   const queryIndex = (req.url || '').indexOf('?');
   const query = queryIndex !== -1 ? req.url.slice(queryIndex) : '';
-  req.url = '/api/health' + query;
+  req.url = '/api/admin/keys/toggle-ban' + query;
   return app(req, res);
 };
