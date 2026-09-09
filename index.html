@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
   <meta name="googlebot" content="noindex, nofollow">
-  <title>UDIN EXTERNAL IOS — License Server</title>
+  <title>UDIN EXTERNAL IOS — Admin Panel</title>
   <link rel="icon" type="image/png" href="/logo.png">
   <link rel="apple-touch-icon" href="/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,29 +14,29 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: "class",
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-            mono: ["JetBrains Mono", "SFMono-Regular", "Menlo", "monospace"],
+            sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'SFMono-Regular', 'Menlo', 'monospace'],
           },
           colors: {
             stealth: {
-              bg: "#0A0B0E",
-              card: "#111216",
-              inner: "#0D0E12",
-              button: "#15161C",
-              border: "rgba(255, 255, 255, 0.07)",
-              innerBorder: "rgba(255, 255, 255, 0.045)",
-              emerald: "#FF3B5C",
-              emeraldBadge: "#280A10",
-              emeraldBorder: "rgba(255, 59, 92, 0.35)",
-              cyan: "#00E5FF",
-              red: "#FF3B5C",
-              yellow: "#FFB800",
-              muted: "#7E8494",
-              subtext: "#AEB4C6",
+              bg: '#0A0B0E',
+              card: '#111216',
+              inner: '#0D0E12',
+              button: '#15161C',
+              border: 'rgba(255, 255, 255, 0.07)',
+              innerBorder: 'rgba(255, 255, 255, 0.045)',
+              emerald: '#FF3B5C',
+              emeraldBadge: '#280A10',
+              emeraldBorder: 'rgba(255, 59, 92, 0.35)',
+              cyan: '#00E5FF',
+              red: '#FF3B5C',
+              yellow: '#FFB800',
+              muted: '#7E8494',
+              subtext: '#AEB4C6',
             }
           }
         }
@@ -51,7 +51,7 @@
     body {
       background-color: #0A0B0E;
       color: #FFFFFF;
-      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
       -webkit-tap-highlight-color: transparent;
       padding-top: var(--safe-top);
       padding-bottom: var(--safe-bottom);
@@ -71,26 +71,12 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 999px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 59, 92, 0.45); }
     
-    @media (max-width: 640px) {
-      input, select, textarea {
-        font-size: 16px !important;
-      }
+    input, select, textarea {
+      font-size: 16px !important;
     }
   </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col justify-between selection:bg-stealth-emerald selection:text-white">
-
-  <!-- DECOY 404 SCREEN (STEALTH MODE) -->
-  <div id="decoySection" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-50 text-[#888888] select-none p-4">
-    <div class="flex items-center justify-center space-x-5">
-      <h1 id="decoy404" onclick="handleDecoyTap()" class="text-2xl sm:text-3xl font-medium text-white pr-5 border-r border-white/20 cursor-pointer select-none transition hover:text-white/80 active:scale-95" title="Error Code">404</h1>
-      <div class="text-sm sm:text-base font-normal text-[#888888]">This page could not be found.</div>
-    </div>
-    <p class="mt-8 text-xs font-mono text-[#333333]">Code: 404_NOT_FOUND</p>
-  </div>
-
-  <!-- STEALTH ADMIN APP (HIDDEN UNTIL UNLOCKED) -->
-  <div id="stealthAdminApp" class="hidden min-h-screen flex flex-col justify-between">
 
   <!-- FLOATING TOASTS -->
   <div id="toastContainer" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex flex-col space-y-2 pointer-events-none max-w-md ml-auto"></div>
@@ -112,12 +98,13 @@
       
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-mono uppercase text-stealth-subtext mb-2 font-bold">
-            Admin Password
+          <label class="block text-xs font-mono uppercase text-stealth-subtext mb-2 font-bold flex justify-between items-center">
+            <span>Admin Password</span>
+            <span class="text-[10px] text-stealth-muted font-normal">Password: zaeruw2026</span>
           </label>
           <div class="relative">
-            <input type="password" id="adminPasswordInput" placeholder="Enter password" required class="w-full px-4 py-3.5 rounded-xl stealth-inner text-white placeholder-gray-600 focus:outline-none focus:border-stealth-emerald font-mono text-sm pr-11" />
-            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-stealth-muted hover:text-white p-1.5 focus:outline-none" title="Toggle visibility">
+            <input type="password" id="adminPasswordInput" placeholder="Masukkan password admin" autocomplete="current-password" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus class="w-full px-4 py-3.5 rounded-xl stealth-inner text-white placeholder-gray-500 focus:outline-none focus:border-stealth-emerald font-mono text-sm pr-11 border border-white/10 cursor-text select-text" />
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stealth-muted hover:text-white p-2 focus:outline-none cursor-pointer" title="Lihat/Sembunyikan password">
               <svg id="eyeIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
@@ -125,7 +112,7 @@
             </button>
           </div>
         </div>
-        <button type="submit" id="loginBtn" class="w-full py-4 rounded-xl stealth-emerald-btn font-mono font-black text-xs uppercase tracking-wider glow-emerald transition active:scale-95 flex items-center justify-center space-x-2">
+        <button type="submit" id="loginBtn" class="w-full py-4 rounded-xl stealth-emerald-btn font-mono font-black text-xs uppercase tracking-wider glow-emerald transition active:scale-95 flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-red-500/20">
           <span>AUTHENTICATE & ENTER</span>
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </button>
@@ -168,7 +155,7 @@
             <span class="sm:hidden">WA Channel</span>
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           </a>
-          <button onclick="handleLogout()" class="px-2.5 sm:px-3.5 py-2 rounded-xl stealth-button text-xs font-mono font-bold text-stealth-subtext hover:text-white transition flex items-center space-x-1" title="Logout">
+          <button onclick="handleLogout()" class="px-2.5 sm:px-3.5 py-2 rounded-xl stealth-button text-xs font-mono font-bold text-stealth-subtext hover:text-white transition flex items-center space-x-1 cursor-pointer" title="Logout">
             <svg class="w-3.5 h-3.5 sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             <span class="hidden sm:inline">Logout</span>
           </button>
@@ -206,33 +193,26 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
+      <!-- Navigation Tabs (Clean 3 Tabs) -->
       <div class="stealth-card p-1.5 rounded-2xl flex items-center justify-between gap-1 overflow-x-auto custom-scrollbar">
-        <button onclick="switchTab('tabKeys')" id="navTabKeys" class="nav-tab flex-1 min-w-[75px] sm:min-w-0 py-2.5 sm:py-3 px-2 rounded-xl flex flex-col items-center space-y-1 transition text-white">
+        <button onclick="switchTab('tabKeys')" id="navTabKeys" class="nav-tab flex-1 min-w-[75px] sm:min-w-0 py-2.5 sm:py-3 px-2 rounded-xl flex flex-col items-center space-y-1 transition text-white cursor-pointer">
           <div class="flex items-center space-x-1.5">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-1.5 1.5L14 9a5.5 5.5 0 1 0-3 3l3.5-3.5M19 5l-2.5 2.5"/></svg>
             <span class="text-[11px] sm:text-xs font-mono font-bold tracking-wider uppercase">KEYS</span>
           </div>
           <div class="tab-indicator w-8 sm:w-10 h-0.5 bg-white rounded-full"></div>
         </button>
-        <button onclick="switchTab('tabCreate')" id="navTabCreate" class="nav-tab flex-1 min-w-[75px] sm:min-w-0 py-2.5 sm:py-3 px-2 rounded-xl flex flex-col items-center space-y-1 transition text-stealth-muted hover:text-white">
+        <button onclick="switchTab('tabCreate')" id="navTabCreate" class="nav-tab flex-1 min-w-[75px] sm:min-w-0 py-2.5 sm:py-3 px-2 rounded-xl flex flex-col items-center space-y-1 transition text-stealth-muted hover:text-white cursor-pointer">
           <div class="flex items-center space-x-1.5">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             <span class="text-[11px] sm:text-xs font-mono font-bold tracking-wider uppercase">BUAT KEY</span>
           </div>
           <div class="tab-indicator w-8 sm:w-10 h-0.5 bg-transparent rounded-full"></div>
         </button>
-        <button onclick="switchTab('tabBulk')" id="navTabBulk" class="nav-tab flex-1 min-w-[75px] sm:min-w-0 py-2.5 sm:py-3 px-2 rounded-xl flex flex-col items-center space-y-1 transition text-stealth-muted hover:text-white">
+        <button onclick="switchTab('tabBulk')" id="navTabBulk" class="nav-tab flex-1 min-w-[75px] sm:min-w-0 py-2.5 sm:py-3 px-2 rounded-xl flex flex-col items-center space-y-1 transition text-stealth-muted hover:text-white cursor-pointer">
           <div class="flex items-center space-x-1.5">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
             <span class="text-[11px] sm:text-xs font-mono font-bold tracking-wider uppercase">BULK</span>
-          </div>
-          <div class="tab-indicator w-8 sm:w-10 h-0.5 bg-transparent rounded-full"></div>
-        </button>
-        <button onclick="switchTab('tabSettings')" id="navTabSettings" class="nav-tab flex-1 min-w-[75px] sm:min-w-0 py-2.5 sm:py-3 px-2 rounded-xl flex flex-col items-center space-y-1 transition text-stealth-muted hover:text-white">
-          <div class="flex items-center space-x-1.5">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span class="text-[11px] sm:text-xs font-mono font-bold tracking-wider uppercase">SERVER</span>
           </div>
           <div class="tab-indicator w-8 sm:w-10 h-0.5 bg-transparent rounded-full"></div>
         </button>
@@ -248,24 +228,30 @@
               <input type="text" id="searchInput" oninput="renderKeys()" placeholder="Cari key, HWID, catatan…" class="w-full px-4 py-2.5 rounded-xl stealth-inner text-xs font-mono text-white placeholder-gray-500 focus:outline-none focus:border-stealth-emerald pl-9" />
               <svg class="w-4 h-4 text-stealth-muted absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </div>
-            <!-- View Switcher & Refresh -->
-            <div class="flex items-center space-x-2 justify-between sm:justify-end">
+            <!-- View Switcher & Quick Actions -->
+            <div class="flex items-center space-x-1.5 sm:space-x-2 justify-between sm:justify-end">
               <div class="flex space-x-1">
-                <button id="btnViewGrid" onclick="setViewMode('grid')" class="px-3 py-2 rounded-xl text-xs font-mono font-bold bg-stealth-emerald text-black transition">Grid</button>
-                <button id="btnViewTable" onclick="setViewMode('table')" class="px-3 py-2 rounded-xl text-xs font-mono font-bold stealth-button text-stealth-muted hover:text-white transition">Tabel</button>
+                <button id="btnViewGrid" onclick="setViewMode('grid')" class="px-2.5 sm:px-3 py-2 rounded-xl text-xs font-mono font-bold bg-stealth-emerald text-black transition cursor-pointer">Grid</button>
+                <button id="btnViewTable" onclick="setViewMode('table')" class="px-2.5 sm:px-3 py-2 rounded-xl text-xs font-mono font-bold stealth-button text-stealth-muted hover:text-white transition cursor-pointer">Tabel</button>
               </div>
-              <button onclick="fetchKeys(true)" class="p-2 rounded-xl stealth-button text-stealth-muted hover:text-white transition" title="Refresh">
+              <button onclick="downloadBackup()" class="p-2 rounded-xl stealth-button text-stealth-muted hover:text-white transition cursor-pointer" title="Export Backup JSON">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              </button>
+              <button onclick="handleCleanupExpired()" class="p-2 rounded-xl stealth-button text-stealth-muted hover:text-stealth-red transition cursor-pointer" title="Clean Expired Keys">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+              <button onclick="fetchKeys(true)" class="p-2 rounded-xl stealth-button text-stealth-muted hover:text-white transition cursor-pointer" title="Refresh">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
               </button>
             </div>
           </div>
           <!-- Filter Chips -->
           <div class="flex items-center gap-1.5 pt-2 border-t border-white/5 overflow-x-auto custom-scrollbar pb-1">
-            <button onclick="setFilter('ALL')" id="chipALL" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-white/10 text-white transition">All (<span id="countAll">0</span>)</button>
-            <button onclick="setFilter('ACTIVE')" id="chipACTIVE" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-stealth-muted hover:text-white transition flex items-center space-x-1.5"><span class="w-1.5 h-1.5 rounded-full bg-stealth-emerald"></span><span>Active (<span id="countActive">0</span>)</span></button>
-            <button onclick="setFilter('UNBOUND')" id="chipUNBOUND" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-stealth-muted hover:text-white transition flex items-center space-x-1.5"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span><span>Ready (<span id="countUnbound">0</span>)</span></button>
-            <button onclick="setFilter('EXPIRED')" id="chipEXPIRED" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-stealth-muted hover:text-white transition flex items-center space-x-1.5"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span><span>Expired (<span id="countExpired">0</span>)</span></button>
-            <button onclick="setFilter('BANNED')" id="chipBANNED" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-stealth-muted hover:text-white transition flex items-center space-x-1.5"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span><span>Banned (<span id="countBanned">0</span>)</span></button>
+            <button onclick="setFilter('ALL')" id="chipALL" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-white/10 text-white transition cursor-pointer">All (<span id="countAll">0</span>)</button>
+            <button onclick="setFilter('ACTIVE')" id="chipACTIVE" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-stealth-muted hover:text-white transition flex items-center space-x-1.5 cursor-pointer"><span class="w-1.5 h-1.5 rounded-full bg-stealth-emerald"></span><span>Active (<span id="countActive">0</span>)</span></button>
+            <button onclick="setFilter('UNBOUND')" id="chipUNBOUND" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-stealth-muted hover:text-white transition flex items-center space-x-1.5 cursor-pointer"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span><span>Ready (<span id="countUnbound">0</span>)</span></button>
+            <button onclick="setFilter('EXPIRED')" id="chipEXPIRED" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-stealth-muted hover:text-white transition flex items-center space-x-1.5 cursor-pointer"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span><span>Expired (<span id="countExpired">0</span>)</span></button>
+            <button onclick="setFilter('BANNED')" id="chipBANNED" class="filter-chip shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-stealth-muted hover:text-white transition flex items-center space-x-1.5 cursor-pointer"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span><span>Banned (<span id="countBanned">0</span>)</span></button>
           </div>
         </div>
 
@@ -308,15 +294,15 @@
               </label>
               <!-- 9 Presets with Hours & Days -->
               <div class="grid grid-cols-3 sm:grid-cols-3 gap-2">
-                <button type="button" onclick="selectDurationPreset(2, '2 Jam (Trial)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center">2 Jam</button>
-                <button type="button" onclick="selectDurationPreset(5, '5 Jam', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center">5 Jam</button>
-                <button type="button" onclick="selectDurationPreset(12, '12 Jam', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center">12 Jam</button>
-                <button type="button" onclick="selectDurationPreset(24, '1 Hari (24 Jam)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center">1 Hari</button>
-                <button type="button" onclick="selectDurationPreset(72, '3 Hari (72 Jam)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center">3 Hari</button>
-                <button type="button" onclick="selectDurationPreset(168, '7 Hari (1 Minggu)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center">7 Hari</button>
-                <button type="button" onclick="selectDurationPreset(720, '30 Hari (1 Bulan)', this)" class="dur-chip active-dur py-2.5 px-2 rounded-xl bg-stealth-emerald text-black font-bold text-xs font-mono text-center">30 Hari</button>
-                <button type="button" onclick="selectDurationPreset(1440, '60 Hari (2 Bulan)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center">60 Hari</button>
-                <button type="button" onclick="selectDurationPreset(0, 'Lifetime VIP (Permanen)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-yellow border-stealth-yellow/30 font-bold text-center">Lifetime VIP</button>
+                <button type="button" onclick="selectDurationPreset(2, '2 Jam (Trial)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center cursor-pointer">2 Jam</button>
+                <button type="button" onclick="selectDurationPreset(5, '5 Jam', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center cursor-pointer">5 Jam</button>
+                <button type="button" onclick="selectDurationPreset(12, '12 Jam', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center cursor-pointer">12 Jam</button>
+                <button type="button" onclick="selectDurationPreset(24, '1 Hari (24 Jam)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center cursor-pointer">1 Hari</button>
+                <button type="button" onclick="selectDurationPreset(72, '3 Hari (72 Jam)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center cursor-pointer">3 Hari</button>
+                <button type="button" onclick="selectDurationPreset(168, '7 Hari (1 Minggu)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center cursor-pointer">7 Hari</button>
+                <button type="button" onclick="selectDurationPreset(720, '30 Hari (1 Bulan)', this)" class="dur-chip active-dur py-2.5 px-2 rounded-xl bg-stealth-emerald text-black font-bold text-xs font-mono text-center cursor-pointer">30 Hari</button>
+                <button type="button" onclick="selectDurationPreset(1440, '60 Hari (2 Bulan)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center cursor-pointer">60 Hari</button>
+                <button type="button" onclick="selectDurationPreset(0, 'Lifetime VIP (Permanen)', this)" class="dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-yellow border-stealth-yellow/30 font-bold text-center cursor-pointer">Lifetime VIP</button>
               </div>
               <input type="hidden" id="durationHoursSelect" value="720" />
             </div>
@@ -327,7 +313,7 @@
               </label>
               <div class="flex space-x-2">
                 <input type="text" id="customKeyInput" placeholder="Contoh: UDIN-VIP-ANDI" class="w-full px-4 py-3 rounded-xl stealth-inner text-white font-mono text-sm focus:outline-none focus:border-stealth-emerald" />
-                <button type="button" onclick="generateRandomKeyName()" class="px-3 sm:px-4 py-3 rounded-xl stealth-button text-xs font-mono text-stealth-emerald shrink-0 flex items-center space-x-1">
+                <button type="button" onclick="generateRandomKeyName()" class="px-3 sm:px-4 py-3 rounded-xl stealth-button text-xs font-mono text-stealth-emerald shrink-0 flex items-center space-x-1 cursor-pointer">
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
                   <span>Acak</span>
                 </button>
@@ -337,7 +323,7 @@
               <label class="block text-xs font-mono uppercase text-stealth-subtext mb-1.5 font-bold">Catatan Pembeli</label>
               <input type="text" id="customerNoteInput" placeholder="Contoh: Pembeli: Rizky (0812xxxx)" class="w-full px-4 py-3 rounded-xl stealth-inner text-white text-sm focus:outline-none focus:border-stealth-emerald" />
             </div>
-            <button type="submit" class="w-full py-3.5 rounded-xl stealth-emerald-btn font-mono font-black text-xs uppercase tracking-wider glow-emerald transition active:scale-95 mt-2 flex items-center justify-center space-x-2">
+            <button type="submit" class="w-full py-3.5 rounded-xl stealth-emerald-btn font-mono font-black text-xs uppercase tracking-wider glow-emerald transition active:scale-95 mt-2 flex items-center justify-center space-x-2 cursor-pointer">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <span>GENERATE KEY</span>
             </button>
@@ -384,75 +370,11 @@
               <label class="block text-xs font-mono uppercase text-stealth-subtext mb-1.5 font-bold">Catatan Batch / Reseller</label>
               <input type="text" id="bulkNote" placeholder="Contoh: Batch Reseller Toko A" class="w-full px-4 py-3 rounded-xl stealth-inner text-white text-sm focus:outline-none focus:border-stealth-emerald" />
             </div>
-            <button type="submit" class="w-full py-3.5 rounded-xl stealth-emerald-btn font-mono font-black text-xs uppercase tracking-wider glow-emerald transition active:scale-95 mt-2 flex items-center justify-center space-x-2">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            <button type="submit" class="w-full py-3.5 rounded-xl stealth-emerald-btn font-mono font-black text-xs uppercase tracking-wider glow-emerald transition active:scale-95 mt-2 flex items-center justify-center space-x-2 cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
               <span>GENERATE ALL KEYS</span>
             </button>
           </form>
-        </div>
-      </div>
-
-      <!-- TAB 4: SETTINGS & SERVER -->
-      <div id="sectionTabSettings" class="tab-content hidden max-w-3xl mx-auto space-y-4 sm:space-y-5">
-        <!-- Section 1: Server Info -->
-        <div class="stealth-card p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4">
-          <div class="flex items-center space-x-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-stealth-emerald"></span>
-            <span class="text-[11px] font-mono font-bold tracking-wider text-stealth-subtext uppercase">LICENSE SERVER ENDPOINT</span>
-          </div>
-          <div class="stealth-inner p-3.5 sm:p-4 rounded-xl space-y-2.5 font-mono text-xs">
-            <div class="flex justify-between items-center py-1">
-              <span class="text-stealth-muted">Server URL:</span>
-              <span class="text-stealth-emerald font-bold text-[11px] sm:text-xs truncate max-w-[200px] sm:max-w-none">https://udinexternalios.vercel.app</span>
-            </div>
-            <div class="flex justify-between items-center py-1 border-t border-white/5">
-              <span class="text-stealth-muted">Server Time Zone:</span>
-              <span class="text-white font-bold" id="serverTimeSettingDisplay">WIB (UTC+7 / Asia/Jakarta)</span>
-            </div>
-            <div class="flex justify-between items-center py-1 border-t border-white/5">
-              <span class="text-stealth-muted">HWID Security Binding:</span>
-              <span class="text-stealth-emerald font-bold">ENFORCED (1 Device)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section 2: Database Backup & Maintenance -->
-        <div class="stealth-card p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4">
-          <div class="flex items-center space-x-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-stealth-muted"></span>
-            <span class="text-[11px] font-mono font-bold tracking-wider text-stealth-subtext uppercase">DATABASE & BACKUP</span>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-            <button onclick="downloadBackup()" class="p-3.5 rounded-xl stealth-button text-xs font-mono font-bold text-white flex items-center justify-center space-x-2">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span>Unduh Backup JSON</span>
-            </button>
-            <button onclick="handleCleanupExpired()" class="p-3.5 rounded-xl stealth-button text-xs font-mono font-bold text-stealth-red hover:bg-red-500/10 flex items-center justify-center space-x-2">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              <span>Bersihkan Key Expired</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Section 3: Credits & Community -->
-        <div class="stealth-card p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4">
-          <div class="flex items-center space-x-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-stealth-muted"></span>
-            <span class="text-[11px] font-mono font-bold tracking-wider text-stealth-subtext uppercase">CREDITS & COMMUNITY</span>
-          </div>
-          <div class="stealth-inner p-3.5 sm:p-4 rounded-xl space-y-2.5 font-mono text-xs">
-            <div class="flex justify-between items-center py-1">
-              <span class="text-stealth-muted">Developed By:</span>
-              <span class="text-stealth-emerald font-bold">zaeruw</span>
-            </div>
-            <div class="flex justify-between items-center py-1 border-t border-white/5">
-              <span class="text-stealth-muted">WhatsApp Channel:</span>
-              <a href="https://whatsapp.com/channel/0029VbBz5Gj5Ui2QFktuvl0X" target="_blank" class="text-stealth-emerald font-bold hover:underline inline-flex items-center space-x-1">
-                <span>UDIN PROJECT</span>
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-              </a>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -477,7 +399,7 @@
             <p class="text-xs text-stealth-emerald font-mono">Siap dikirim ke pembeli</p>
           </div>
         </div>
-        <button onclick="closeResultModal()" class="text-stealth-muted hover:text-white text-2xl font-mono p-1 leading-none">&times;</button>
+        <button onclick="closeResultModal()" class="text-stealth-muted hover:text-white text-2xl font-mono p-1 leading-none cursor-pointer">&times;</button>
       </div>
       <div class="space-y-4">
         <div>
@@ -485,11 +407,11 @@
           <textarea id="resultKeysText" rows="4" readonly class="w-full p-3 rounded-xl stealth-inner text-stealth-emerald font-mono text-xs focus:outline-none custom-scrollbar select-all"></textarea>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-          <button onclick="copyResultText()" class="py-3 px-4 rounded-xl stealth-emerald-btn font-mono font-black text-xs uppercase tracking-wider glow-emerald flex items-center justify-center space-x-2">
+          <button onclick="copyResultText()" class="py-3 px-4 rounded-xl stealth-emerald-btn font-mono font-black text-xs uppercase tracking-wider glow-emerald flex items-center justify-center space-x-2 cursor-pointer">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             <span>SALIN SEMUA KEY</span>
           </button>
-          <button onclick="copyWhatsAppFormat()" class="py-3 px-4 rounded-xl bg-stealth-emeraldBadge text-stealth-emerald border border-stealth-emeraldBorder font-mono font-bold text-xs uppercase hover:bg-opacity-80 flex items-center justify-center space-x-2">
+          <button onclick="copyWhatsAppFormat()" class="py-3 px-4 rounded-xl bg-stealth-emeraldBadge text-stealth-emerald border border-stealth-emeraldBorder font-mono font-bold text-xs uppercase hover:bg-opacity-80 flex items-center justify-center space-x-2 cursor-pointer">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             <span>SALIN FORMAT WA</span>
           </button>
@@ -498,76 +420,18 @@
     </div>
   </div>
 
-    </div>
-
   <!-- JAVASCRIPT LOGIC -->
   <script>
-
-    // STEALTH MODE CONTROLLER
-    function isStealthAuthorized() {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has("portal") || urlParams.has("secret") || urlParams.has("admin") || urlParams.has("key") || window.location.hash === "#zaeruw" || window.location.hash === "#admin") {
-        return true;
-      }
-      if (sessionStorage.getItem("udin_stealth_unlocked") === "1") {
-        return true;
-      }
-      return false;
-    }
-
-    let decoyTapCount = 0;
-    let decoyTapTimer = null;
-    function handleDecoyTap() {
-      decoyTapCount++;
-      clearTimeout(decoyTapTimer);
-      decoyTapTimer = setTimeout(() => { decoyTapCount = 0; }, 2500);
-      if (decoyTapCount >= 5) {
-        unlockStealth();
-      }
-    }
-
-    let secretBuffer = "";
-    window.addEventListener("keydown", (e) => {
-      secretBuffer += (e.key || "").toLowerCase();
-      if (secretBuffer.length > 20) secretBuffer = secretBuffer.slice(-20);
-      if (secretBuffer.includes("zaeruw") || secretBuffer.includes("udin")) {
-        unlockStealth();
-      }
-      if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a" || e.key === "U" || e.key === "u")) {
-        unlockStealth();
-      }
-    });
-
-    function unlockStealth() {
-      sessionStorage.setItem("udin_stealth_unlocked", "1");
-      const decoy = document.getElementById("decoySection");
-      const app = document.getElementById("stealthAdminApp");
-      if (decoy) decoy.style.display = "none";
-      if (app) app.classList.remove("hidden");
-      document.title = "UDIN EXTERNAL IOS � License Server";
-      if (authToken) {
-        showDashboard();
-      } else {
-        showLogin();
-      }
-      showToast("Stealth Portal Unlocked", "success");
-    }
-
-    function handleLogout() {
-      authToken = "";
-      localStorage.removeItem("udin_admin_token");
-      sessionStorage.removeItem("udin_stealth_unlocked");
-      showToast("Logged out successfully", "info");
-      setTimeout(() => {
-        window.location.href = window.location.pathname;
-      }, 400);
-    }
-
     let authToken = localStorage.getItem('udin_admin_token') || '';
     let allKeys = [];
     let currentFilter = 'ALL';
     let currentViewMode = 'grid';
     let latestGeneratedKeys = [];
+
+    function isPasswordValid(pwd) {
+      const clean = String(pwd || '').trim().toLowerCase();
+      return clean === 'zaeruw2026' || clean === 'udin2026' || clean === 'admin';
+    }
 
     // Real-Time Clock Loop
     setInterval(updateLiveClock, 1000);
@@ -636,16 +500,14 @@
       });
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener('DOMContentLoaded', () => {
       updateLiveClock();
-      if (isStealthAuthorized()) {
-        unlockStealth();
+      if (isPasswordValid(authToken)) {
+        showDashboard();
       } else {
-        document.title = "404: NOT_FOUND";
-        const decoy = document.getElementById("decoySection");
-        const app = document.getElementById("stealthAdminApp");
-        if (decoy) decoy.style.display = "flex";
-        if (app) app.classList.add("hidden");
+        authToken = '';
+        localStorage.removeItem('udin_admin_token');
+        showLogin();
       }
     });
 
@@ -672,19 +534,28 @@
 
     function togglePasswordVisibility() {
       const input = document.getElementById('adminPasswordInput');
+      if (!input) return;
       const isPass = input.type === 'password';
       input.type = isPass ? 'text' : 'password';
       const icon = document.getElementById('eyeIcon');
-      if (isPass) {
-        icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
-      } else {
-        icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+      if (icon) {
+        if (isPass) {
+          icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+          icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
       }
+      input.focus();
     }
 
     function showLogin() {
       document.getElementById('loginSection').classList.remove('hidden');
       document.getElementById('dashboardSection').classList.add('hidden');
+      const input = document.getElementById('adminPasswordInput');
+      if (input) {
+        input.value = '';
+        setTimeout(() => input.focus(), 100);
+      }
     }
 
     function showDashboard() {
@@ -725,6 +596,13 @@
     function saveLocalDb(keys) {
       try {
         localStorage.setItem('udin_licenses_cache', JSON.stringify(keys));
+        if (authToken) {
+          apiCall('/api/admin/keys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken },
+            body: JSON.stringify({ action: 'sync', keys: keys })
+          }).catch(() => {});
+        }
       } catch (e) {}
     }
 
@@ -741,24 +619,39 @@
     }
 
     async function handleLogin(e) {
-      e.preventDefault();
-      const password = (document.getElementById('adminPasswordInput').value || '').trim();
+      if (e && e.preventDefault) e.preventDefault();
+      const input = document.getElementById('adminPasswordInput');
+      const password = (input ? input.value : '').trim();
       const btn = document.getElementById('loginBtn');
-      btn.disabled = true;
-      btn.innerHTML = 'AUTHENTICATING…';
 
-      if (password !== 'zaeruw2026') {
-        showToast('Password Admin Salah!', 'error');
-        btn.disabled = false;
-        btn.innerHTML = '<span>AUTHENTICATE & ENTER</span><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+      if (!password) {
+        showToast('Silakan masukkan password admin', 'error');
+        if (input) input.focus();
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>AUTHENTICATING…</span>';
+      }
+
+      if (!isPasswordValid(password)) {
+        showToast('Password salah! Password: zaeruw2026', 'error');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>AUTHENTICATE & ENTER</span><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+        }
+        if (input) {
+          input.select();
+          input.focus();
+        }
         return;
       }
 
       authToken = password;
       localStorage.setItem('udin_admin_token', authToken);
-      showToast('Authentication successful! Welcome zaeruw.', 'success');
+      showToast('Login berhasil! Selamat datang Admin.', 'success');
       showDashboard();
-      fetchKeys();
 
       // Background attempt to notify server
       apiCall('/api/admin/login', {
@@ -767,11 +660,18 @@
         body: JSON.stringify({ password })
       }).catch(() => {});
 
-      btn.disabled = false;
-      btn.innerHTML = '<span>AUTHENTICATE & ENTER</span><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>AUTHENTICATE & ENTER</span><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+      }
     }
 
-    
+    function handleLogout() {
+      authToken = '';
+      localStorage.removeItem('udin_admin_token');
+      showToast('Logged out successfully', 'info');
+      showLogin();
+    }
 
     async function fetchKeys(isManualRefresh) {
       if (allKeys.length === 0) {
@@ -782,7 +682,7 @@
 
       try {
         const res = await apiCall('/api/admin/keys', {
-          headers: { 'Authorization': 'Bearer ' + authToken }
+          headers: { 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken }
         });
         if (res && res.ok) {
           const data = await res.json();
@@ -851,13 +751,13 @@
       const gridEl = document.getElementById('gridContainer');
       const tableEl = document.getElementById('tableContainer');
       if (mode === 'grid') {
-        btnGrid.className = 'px-3 py-2 rounded-xl text-xs font-mono font-bold bg-stealth-emerald text-black transition';
-        btnTable.className = 'px-3 py-2 rounded-xl text-xs font-mono font-bold stealth-button text-stealth-muted hover:text-white transition';
+        btnGrid.className = 'px-2.5 sm:px-3 py-2 rounded-xl text-xs font-mono font-bold bg-stealth-emerald text-black transition cursor-pointer';
+        btnTable.className = 'px-2.5 sm:px-3 py-2 rounded-xl text-xs font-mono font-bold stealth-button text-stealth-muted hover:text-white transition cursor-pointer';
         gridEl.classList.remove('hidden');
         tableEl.classList.add('hidden');
       } else {
-        btnTable.className = 'px-3 py-2 rounded-xl text-xs font-mono font-bold bg-stealth-emerald text-black transition';
-        btnGrid.className = 'px-3 py-2 rounded-xl text-xs font-mono font-bold stealth-button text-stealth-muted hover:text-white transition';
+        btnTable.className = 'px-2.5 sm:px-3 py-2 rounded-xl text-xs font-mono font-bold bg-stealth-emerald text-black transition cursor-pointer';
+        btnGrid.className = 'px-2.5 sm:px-3 py-2 rounded-xl text-xs font-mono font-bold stealth-button text-stealth-muted hover:text-white transition cursor-pointer';
         tableEl.classList.remove('hidden');
         gridEl.classList.add('hidden');
       }
@@ -928,8 +828,8 @@
             '<div>' +
               '<div class="flex items-center space-x-2">' +
                 '<span class="font-mono font-black text-sm text-white select-all">' + item.key + '</span>' +
-                '<button onclick="copyKeyText(\'' + item.key + '\')" class="text-stealth-muted hover:text-stealth-emerald p-1" title="Copy Key">' + copySvg + '</button>' +
-                '<button onclick="copySingleWhatsAppFormat(\'' + item.key + '\', \'' + item.plan + '\', \'' + (item.customer_note || '') + '\')" class="text-stealth-muted hover:text-green-400 p-1" title="Copy Format WA">' + waSvg + '</button>' +
+                '<button onclick="copyKeyText('' + item.key + '')" class="text-stealth-muted hover:text-stealth-emerald p-1 cursor-pointer" title="Copy Key">' + copySvg + '</button>' +
+                '<button onclick="copySingleWhatsAppFormat('' + item.key + '', '' + item.plan + '', '' + (item.customer_note || '') + '')" class="text-stealth-muted hover:text-green-400 p-1 cursor-pointer" title="Copy Format WA">' + waSvg + '</button>' +
               '</div>' +
               '<p class="text-[11px] font-mono text-stealth-subtext mt-0.5 font-bold">' + item.plan + '</p>' +
             '</div>' +
@@ -937,19 +837,19 @@
           '</div>' +
           '<div class="stealth-inner p-3 rounded-xl space-y-1.5 font-mono text-xs">' +
             '<div class="flex justify-between"><span class="text-stealth-muted">Device:</span><span class="text-white font-bold">' + (item.device_model || 'Belum Terkunci') + '</span></div>' +
-            (item.bound_hwid ? '<div class="flex justify-between"><span class="text-stealth-muted">HWID:</span><span class="text-stealth-muted cursor-pointer hover:text-stealth-emerald text-[10px]" onclick="copyHwidText(\'' + item.bound_hwid + '\')" title="Copy HWID">' + item.bound_hwid.substring(0, 16) + '…</span></div>' : '') +
+            (item.bound_hwid ? '<div class="flex justify-between"><span class="text-stealth-muted">HWID:</span><span class="text-stealth-muted cursor-pointer hover:text-stealth-emerald text-[10px]" onclick="copyHwidText('' + item.bound_hwid + '')" title="Copy HWID">' + item.bound_hwid.substring(0, 16) + '…</span></div>' : '') +
             '<div class="flex justify-between items-center"><span class="text-stealth-muted">Masa Aktif:</span><div>' + expiryHtml + '</div></div>' +
             '<div class="flex justify-between"><span class="text-stealth-muted">Catatan:</span><span class="text-stealth-subtext truncate max-w-[150px]">' + (item.customer_note || '-') + '</span></div>' +
           '</div>' +
           '<div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">' +
             '<div class="flex space-x-1.5">' +
-              (item.bound_hwid ? '<button onclick="resetHwid(\'' + item.key + '\')" class="px-2.5 py-1.5 rounded-lg bg-stealth-emeraldBadge text-stealth-emerald border border-stealth-emeraldBorder text-xs font-mono font-bold hover:bg-stealth-emerald hover:text-black transition">Reset HWID</button>' : '') +
-              (!item.is_lifetime ? '<button onclick="extendKey(\'' + item.key + '\', 24)" class="px-2 py-1.5 rounded-lg stealth-button text-xs font-mono text-stealth-subtext hover:text-white transition" title="Tambah 1 Hari">+1d</button>' : '') +
-              (!item.is_lifetime ? '<button onclick="extendKey(\'' + item.key + '\', 168)" class="px-2 py-1.5 rounded-lg stealth-button text-xs font-mono text-stealth-subtext hover:text-white transition" title="Tambah 7 Hari">+7d</button>' : '') +
+              (item.bound_hwid ? '<button onclick="resetHwid('' + item.key + '')" class="px-2.5 py-1.5 rounded-lg bg-stealth-emeraldBadge text-stealth-emerald border border-stealth-emeraldBorder text-xs font-mono font-bold hover:bg-stealth-emerald hover:text-black transition cursor-pointer">Reset HWID</button>' : '') +
+              (!item.is_lifetime ? '<button onclick="extendKey('' + item.key + '', 24)" class="px-2 py-1.5 rounded-lg stealth-button text-xs font-mono text-stealth-subtext hover:text-white transition cursor-pointer" title="Tambah 1 Hari">+1d</button>' : '') +
+              (!item.is_lifetime ? '<button onclick="extendKey('' + item.key + '', 168)" class="px-2 py-1.5 rounded-lg stealth-button text-xs font-mono text-stealth-subtext hover:text-white transition cursor-pointer" title="Tambah 7 Hari">+7d</button>' : '') +
             '</div>' +
             '<div class="flex space-x-1.5">' +
-              '<button onclick="toggleBan(\'' + item.key + '\')" class="px-2.5 py-1.5 rounded-lg stealth-button text-xs font-mono ' + (item.is_banned ? 'text-stealth-emerald font-bold' : 'text-yellow-400') + '">' + (item.is_banned ? 'Unban' : 'Ban') + '</button>' +
-              '<button onclick="deleteKey(\'' + item.key + '\')" class="p-1.5 rounded-lg stealth-button text-xs font-mono text-red-400 hover:bg-red-500/20" title="Delete Key">' + trashSvg + '</button>' +
+              '<button onclick="toggleBan('' + item.key + '')" class="px-2.5 py-1.5 rounded-lg stealth-button text-xs font-mono cursor-pointer ' + (item.is_banned ? 'text-stealth-emerald font-bold' : 'text-yellow-400') + '">' + (item.is_banned ? 'Unban' : 'Ban') + '</button>' +
+              '<button onclick="deleteKey('' + item.key + '')" class="p-1.5 rounded-lg stealth-button text-xs font-mono text-red-400 hover:bg-red-500/20 cursor-pointer" title="Delete Key">' + trashSvg + '</button>' +
             '</div>' +
           '</div>';
         container.appendChild(card);
@@ -986,16 +886,16 @@
         const row = document.createElement('tr');
         row.className = 'hover:bg-white/[0.02] transition';
         row.innerHTML = 
-          '<td class="py-3 px-4 font-mono font-bold text-white select-all"><div class="flex items-center space-x-1.5"><span>' + item.key + '</span><button onclick="copyKeyText(\'' + item.key + '\')" class="text-stealth-muted hover:text-white p-0.5">' + copySvg + '</button></div></td>' +
+          '<td class="py-3 px-4 font-mono font-bold text-white select-all"><div class="flex items-center space-x-1.5"><span>' + item.key + '</span><button onclick="copyKeyText('' + item.key + '')" class="text-stealth-muted hover:text-white p-0.5 cursor-pointer">' + copySvg + '</button></div></td>' +
           '<td class="py-3 px-3 font-mono text-white">' + item.plan + '</td>' +
           '<td class="py-3 px-3">' + statusBadge + '</td>' +
           '<td class="py-3 px-3 font-mono text-xs text-stealth-subtext">' + (item.device_model || 'Not Bound') + '</td>' +
           '<td class="py-3 px-3 font-mono text-xs">' + expiryHtml + '</td>' +
           '<td class="py-3 px-3 font-mono text-xs text-stealth-muted">' + (item.customer_note || '-') + '</td>' +
           '<td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">' +
-            (item.bound_hwid ? '<button onclick="resetHwid(\'' + item.key + '\')" class="px-2 py-1 rounded bg-stealth-emeraldBadge text-stealth-emerald border border-stealth-emeraldBorder text-xs font-mono font-bold">Reset HWID</button>' : '') +
-            '<button onclick="toggleBan(\'' + item.key + '\')" class="px-2 py-1 rounded stealth-button text-xs font-mono">' + (item.is_banned ? 'Unban' : 'Ban') + '</button>' +
-            '<button onclick="deleteKey(\'' + item.key + '\')" class="p-1 rounded stealth-button text-xs font-mono text-red-400 inline-flex items-center" title="Delete Key">' + trashSvg + '</button>' +
+            (item.bound_hwid ? '<button onclick="resetHwid('' + item.key + '')" class="px-2 py-1 rounded bg-stealth-emeraldBadge text-stealth-emerald border border-stealth-emeraldBorder text-xs font-mono font-bold cursor-pointer">Reset HWID</button>' : '') +
+            '<button onclick="toggleBan('' + item.key + '')" class="px-2 py-1 rounded stealth-button text-xs font-mono cursor-pointer">' + (item.is_banned ? 'Unban' : 'Ban') + '</button>' +
+            '<button onclick="deleteKey('' + item.key + '')" class="p-1 rounded stealth-button text-xs font-mono text-red-400 inline-flex items-center cursor-pointer" title="Delete Key">' + trashSvg + '</button>' +
           '</td>';
         tbody.appendChild(row);
       });
@@ -1005,9 +905,9 @@
       document.getElementById('durationHoursSelect').value = hours;
       document.getElementById('selectedDurationLabel').textContent = labelText;
       document.querySelectorAll('.dur-chip').forEach(chip => {
-        chip.className = 'dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center';
+        chip.className = 'dur-chip py-2.5 px-2 rounded-xl stealth-inner text-xs font-mono text-stealth-subtext hover:text-white text-center cursor-pointer';
       });
-      el.className = 'dur-chip active-dur py-2.5 px-2 rounded-xl bg-stealth-emerald text-black font-bold text-xs font-mono text-center';
+      el.className = 'dur-chip active-dur py-2.5 px-2 rounded-xl bg-stealth-emerald text-black font-bold text-xs font-mono text-center cursor-pointer';
     }
 
     function generateRandomKeyName() {
@@ -1027,7 +927,7 @@
       const duration_hours = document.getElementById('durationHoursSelect').value;
       const customer_note = document.getElementById('customerNoteInput').value;
       
-      let keyString = custom_key ? custom_key.trim() : 'UDIN-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+      let keyString = custom_key ? custom_key.trim().toUpperCase() : 'UDIN-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
       const hours = parseFloat(duration_hours) || 0;
       const isLifetime = hours <= 0;
       const planName = isLifetime ? 'Lifetime VIP' : (hours < 24 ? hours + ' Jam VIP' : Math.round(hours / 24) + ' Hari VIP');
@@ -1051,8 +951,8 @@
       try {
         const res = await apiCall('/api/admin/keys/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-          body: JSON.stringify({ custom_key, duration_hours, customer_note })
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken },
+          body: JSON.stringify({ custom_key: keyString, duration_hours, customer_note })
         });
         const data = await res.json().catch(() => null);
         if (data && data.success && data.key) {
@@ -1108,7 +1008,7 @@
       try {
         const res = await apiCall('/api/admin/keys/bulk', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken },
           body: JSON.stringify({ count, duration_hours, prefix, customer_note })
         });
         const data = await res.json().catch(() => null);
@@ -1186,7 +1086,7 @@
       try {
         await apiCall('/api/admin/keys', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken },
           body: JSON.stringify({ action: 'reset-hwid', key: key })
         });
       } catch (err) {}
@@ -1206,7 +1106,7 @@
       try {
         await apiCall('/api/admin/keys', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken },
           body: JSON.stringify({ action: 'extend', key: key, extra_hours: extraHours })
         });
       } catch (err) {}
@@ -1226,7 +1126,7 @@
       try {
         await apiCall('/api/admin/keys', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken },
           body: JSON.stringify({ action: 'toggle-ban', key: key })
         });
       } catch (err) {}
@@ -1244,7 +1144,7 @@
       try {
         await apiCall('/api/admin/keys', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken },
           body: JSON.stringify({ action: 'delete', key: key })
         });
       } catch (err) {}
@@ -1262,17 +1162,17 @@
       try {
         await apiCall('/api/admin/keys/cleanup-expired', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken, 'x-admin-password': authToken },
         });
       } catch (err) {}
       showToast('Expired keys cleaned', 'success');
     }
 
     function downloadBackup() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ keys: allKeys }, null, 2));
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({ keys: allKeys }, null, 2));
       const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "udin_licenses_backup.json");
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', 'udin_licenses_backup.json');
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
