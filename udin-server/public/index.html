@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="googlebot" content="noindex, nofollow">
   <title>UDIN EXTERNAL IOS — License Server</title>
   <link rel="icon" type="image/png" href="/logo.png">
   <link rel="apple-touch-icon" href="/logo.png">
@@ -77,6 +79,18 @@
   </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col justify-between selection:bg-stealth-emerald selection:text-white">
+
+  <!-- DECOY 404 SCREEN (STEALTH MODE) -->
+  <div id="decoySection" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-50 text-[#888888] select-none p-4">
+    <div class="flex items-center justify-center space-x-5">
+      <h1 id="decoy404" onclick="handleDecoyTap()" class="text-2xl sm:text-3xl font-medium text-white pr-5 border-r border-white/20 cursor-pointer select-none transition hover:text-white/80 active:scale-95" title="Error Code">404</h1>
+      <div class="text-sm sm:text-base font-normal text-[#888888]">This page could not be found.</div>
+    </div>
+    <p class="mt-8 text-xs font-mono text-[#333333]">Code: 404_NOT_FOUND</p>
+  </div>
+
+  <!-- STEALTH ADMIN APP (HIDDEN UNTIL UNLOCKED) -->
+  <div id="stealthAdminApp" class="hidden min-h-screen flex flex-col justify-between">
 
   <!-- FLOATING TOASTS -->
   <div id="toastContainer" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex flex-col space-y-2 pointer-events-none max-w-md ml-auto"></div>
@@ -484,8 +498,71 @@
     </div>
   </div>
 
+    </div>
+
   <!-- JAVASCRIPT LOGIC -->
   <script>
+
+    // STEALTH MODE CONTROLLER
+    function isStealthAuthorized() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has("portal") || urlParams.has("secret") || urlParams.has("admin") || urlParams.has("key") || window.location.hash === "#zaeruw" || window.location.hash === "#admin") {
+        return true;
+      }
+      if (sessionStorage.getItem("udin_stealth_unlocked") === "1") {
+        return true;
+      }
+      return false;
+    }
+
+    let decoyTapCount = 0;
+    let decoyTapTimer = null;
+    function handleDecoyTap() {
+      decoyTapCount++;
+      clearTimeout(decoyTapTimer);
+      decoyTapTimer = setTimeout(() => { decoyTapCount = 0; }, 2500);
+      if (decoyTapCount >= 5) {
+        unlockStealth();
+      }
+    }
+
+    let secretBuffer = "";
+    window.addEventListener("keydown", (e) => {
+      secretBuffer += (e.key || "").toLowerCase();
+      if (secretBuffer.length > 20) secretBuffer = secretBuffer.slice(-20);
+      if (secretBuffer.includes("zaeruw") || secretBuffer.includes("udin")) {
+        unlockStealth();
+      }
+      if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a" || e.key === "U" || e.key === "u")) {
+        unlockStealth();
+      }
+    });
+
+    function unlockStealth() {
+      sessionStorage.setItem("udin_stealth_unlocked", "1");
+      const decoy = document.getElementById("decoySection");
+      const app = document.getElementById("stealthAdminApp");
+      if (decoy) decoy.style.display = "none";
+      if (app) app.classList.remove("hidden");
+      document.title = "UDIN EXTERNAL IOS � License Server";
+      if (authToken) {
+        showDashboard();
+      } else {
+        showLogin();
+      }
+      showToast("Stealth Portal Unlocked", "success");
+    }
+
+    function handleLogout() {
+      authToken = "";
+      localStorage.removeItem("udin_admin_token");
+      sessionStorage.removeItem("udin_stealth_unlocked");
+      showToast("Logged out successfully", "info");
+      setTimeout(() => {
+        window.location.href = window.location.pathname;
+      }, 400);
+    }
+
     let authToken = localStorage.getItem('udin_admin_token') || '';
     let allKeys = [];
     let currentFilter = 'ALL';
@@ -559,12 +636,16 @@
       });
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener("DOMContentLoaded", () => {
       updateLiveClock();
-      if (authToken) {
-        showDashboard();
+      if (isStealthAuthorized()) {
+        unlockStealth();
       } else {
-        showLogin();
+        document.title = "404: NOT_FOUND";
+        const decoy = document.getElementById("decoySection");
+        const app = document.getElementById("stealthAdminApp");
+        if (decoy) decoy.style.display = "flex";
+        if (app) app.classList.add("hidden");
       }
     });
 
@@ -690,12 +771,7 @@
       btn.innerHTML = '<span>AUTHENTICATE & ENTER</span><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
     }
 
-    function handleLogout() {
-      authToken = '';
-      localStorage.removeItem('udin_admin_token');
-      showToast('Logged out successfully', 'info');
-      showLogin();
-    }
+    
 
     async function fetchKeys(isManualRefresh) {
       if (allKeys.length === 0) {
