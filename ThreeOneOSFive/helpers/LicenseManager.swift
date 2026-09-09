@@ -1,4 +1,3 @@
-import Combine
 import Foundation
 import Security
 import UIKit
@@ -21,7 +20,7 @@ final class LicenseManager: ObservableObject {
     private let planAccount = "license-plan"
     private let expiryAccount = "license-expiry"
     private var lastAttemptAt: Date?
-    private var heartbeatCancellable: AnyCancellable?
+    private var heartbeatTask: Task<Void, Never>?
 
     var deviceHWID: String {
         if let vendorId = UIDevice.current.identifierForVendor?.uuidString {
@@ -86,18 +85,19 @@ final class LicenseManager: ObservableObject {
     }
 
     func startHeartbeat() {
-        heartbeatCancellable?.cancel()
-        heartbeatCancellable = Timer.publish(every: 8.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                guard let self, self.isActive, let key = self.rememberedKey() else { return }
+        stopHeartbeat()
+        heartbeatTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 8_000_000_000)
+                guard let self = self, self.isActive, let key = self.rememberedKey() else { break }
                 self.silentVerify(key: key)
             }
+        }
     }
 
     func stopHeartbeat() {
-        heartbeatCancellable?.cancel()
-        heartbeatCancellable = nil
+        heartbeatTask?.cancel()
+        heartbeatTask = nil
     }
 
     func activate(key: String) {
@@ -132,23 +132,17 @@ final class LicenseManager: ObservableObject {
 
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            DispatchQueue.main.async {
-                guard let self else { return }
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
                 self.isBusy = false
-
-                if let error {
-                    self.isActive = false
-                    self.message = "Connection error: \(error.localizedDescription)"
-                    return
-                }
-
                 let httpResponse = response as? HTTPURLResponse
                 let statusCode = httpResponse?.statusCode ?? 200
 
-                guard let data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                     self.isActive = false
-                    self.message = "Invalid response from server (Status \(statusCode))"
+                    self.message = "Invalid response from server"
                     return
                 }
 
@@ -186,8 +180,12 @@ final class LicenseManager: ObservableObject {
                     self.message = serverMessage
                     self.stopHeartbeat()
                 }
+            } catch {
+                self.isBusy = false
+                self.isActive = false
+                self.message = "Connection error: \(error.localizedDescription)"
             }
-        }.resume()
+        }
     }
 
     func silentVerify(key: String) {
@@ -203,17 +201,16 @@ final class LicenseManager: ObservableObject {
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let self else { return }
-            
-            let httpResponse = response as? HTTPURLResponse
-            let statusCode = httpResponse?.statusCode ?? 200
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                let httpResponse = response as? HTTPURLResponse
+                let statusCode = httpResponse?.statusCode ?? 200
 
-            DispatchQueue.main.async {
-                // If server explicitly rejects (Key deleted = 404, Key banned = 403, Unauthorized = 401)
                 if statusCode == 401 || statusCode == 403 || statusCode == 404 {
                     var errorReason = "License revoked or deleted by admin"
-                    if let data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                        let msg = json["message"] as? String {
                         errorReason = msg
                     }
@@ -221,8 +218,7 @@ final class LicenseManager: ObservableObject {
                     return
                 }
 
-                guard let data,
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
 
                 let valid = json["valid"] as? Bool ?? false
                 if !valid {
@@ -236,8 +232,10 @@ final class LicenseManager: ObservableObject {
                         self.isLifetime = lifetime
                     }
                 }
+            } catch {
+                // Network error on background heartbeat: do not disrupt user if offline momentarily
             }
-        }.resume()
+        }
     }
 
     private func revokeAccess(reason: String) {
