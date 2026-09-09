@@ -100,7 +100,7 @@
         <div>
           <label class="block text-xs font-mono uppercase text-stealth-subtext mb-2 font-bold flex justify-between items-center">
             <span>Admin Password</span>
-            <span class="text-[10px] text-stealth-muted font-normal">Password: zaeruw2026</span>
+            
           </label>
           <div class="relative">
             <input type="password" id="adminPasswordInput" placeholder="Masukkan password admin" autocomplete="current-password" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus onkeydown="if(event.key==='Enter'){handleLogin(event); return false;}" class="w-full px-4 py-3.5 rounded-xl stealth-inner text-white placeholder-gray-500 focus:outline-none focus:border-stealth-emerald font-mono text-sm pr-11 border border-white/10 cursor-text select-text" />
@@ -642,7 +642,7 @@
       }
 
       if (!isPasswordValid(password)) {
-        showToast('Password salah! Password: zaeruw2026', 'error');
+        showToast('Password salah! Silakan coba lagi.', 'error');
         if (input) {
           input.select();
           input.focus();
