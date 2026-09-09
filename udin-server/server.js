@@ -12,6 +12,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/index.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'licenses.json');
 const SEED_FILE = path.join(__dirname, 'data', 'licenses.json');
@@ -467,10 +475,14 @@ app.post('/api/admin/keys/import', authMiddleware, (req, res) => {
   res.json({ success: true, message: `Successfully imported ${keys.length} licenses!` });
 });
 
-app.listen(PORT, () => {
-  console.log(`===========================================`);
-  console.log(`🚀 UDIN LICENSE ADMIN SERVER READY`);
-  console.log(`🌐 Dashboard: http://localhost:${PORT}`);
-  console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
-  console.log(`===========================================`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`===========================================`);
+    console.log(`🚀 UDIN LICENSE ADMIN SERVER READY`);
+    console.log(`🌐 Dashboard: http://localhost:${PORT}`);
+    console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
+    console.log(`===========================================`);
+  });
+}
+
+module.exports = app;

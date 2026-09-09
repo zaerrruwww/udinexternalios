@@ -1,0 +1,13 @@
+﻿{
+  "name": "udin-external-ios",
+  "version": "2.4.0",
+  "private": true,
+  "main": "udin-server/server.js",
+  "scripts": {
+    "start": "node udin-server/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
