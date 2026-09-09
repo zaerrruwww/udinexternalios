@@ -1,15 +1,8 @@
 ﻿{
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "udin-server/server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "udin-server/server.js"
+      "source": "/api/(.*)",
+      "destination": "/api"
     }
   ]
 }
