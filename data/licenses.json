@@ -15,5 +15,6 @@
       "is_banned": false,
       "status": "UNBOUND"
     }
-  ]
+  ],
+  "revoked": []
 }

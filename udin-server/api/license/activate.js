@@ -32,11 +32,13 @@ module.exports = async (req, res) => {
   const cleanHwid = String(hwid).trim();
 
   let keys = [];
+  let revoked = [];
 
   try {
     if (fs.existsSync(LOCAL_DATA_FILE)) {
       const p = JSON.parse(fs.readFileSync(LOCAL_DATA_FILE, 'utf8'));
       if (p && Array.isArray(p.keys)) keys = p.keys;
+      if (p && Array.isArray(p.revoked)) revoked = p.revoked;
     }
   } catch (e) {}
 
@@ -50,54 +52,82 @@ module.exports = async (req, res) => {
           else keys.push(k);
         });
       }
+      if (p && Array.isArray(p.revoked)) {
+        p.revoked.forEach(r => {
+          if (!revoked.includes(r.toUpperCase())) revoked.push(r.toUpperCase());
+        });
+      }
     }
   } catch (e) {}
 
-  let item = keys.find(k => k.key.toUpperCase() === cleanKey);
-
-  // Auto provision any valid UDIN key if not in db
-  if (!item) {
-    item = {
-      key: cleanKey,
-      plan: 'Lifetime VIP',
-      duration_hours: 0,
-      duration_days: 0,
-      is_lifetime: true,
-      created_at: new Date().toISOString(),
-      activated_at: null,
-      expiry_date: null,
-      bound_hwid: null,
-      device_model: device_model || 'iOS Device',
-      customer_note: 'VIP Access Key',
-      is_banned: false,
-      status: 'UNBOUND'
-    };
-    keys.unshift(item);
+  // 1. Check if key is explicitly revoked/deleted
+  if (revoked.includes(cleanKey)) {
+    return res.status(403).json({
+      success: false,
+      message: 'This key has been deleted/revoked by administrator.'
+    });
   }
 
+  // 2. Find key in active database
+  let item = keys.find(k => k.key.toUpperCase() === cleanKey);
+
+  // If not found in DB
+  if (!item) {
+    // If it's the master key UDIN-LHIA-F0HD, allow it
+    if (cleanKey === 'UDIN-LHIA-F0HD') {
+      item = {
+        key: cleanKey,
+        plan: 'Lifetime VIP',
+        duration_hours: 0,
+        duration_days: 0,
+        is_lifetime: true,
+        created_at: new Date().toISOString(),
+        activated_at: null,
+        expiry_date: null,
+        bound_hwid: null,
+        device_model: device_model || 'iOS Device',
+        customer_note: 'VIP Access Key',
+        is_banned: false,
+        status: 'UNBOUND'
+      };
+      keys.unshift(item);
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid access key. Key does not exist or has been deleted.'
+      });
+    }
+  }
+
+  // 3. Check banned
   if (item.is_banned) {
-    return res.status(403).json({ success: false, message: 'This key has been suspended by admin.' });
+    return res.status(403).json({
+      success: false,
+      message: 'This key has been banned/suspended by administrator.'
+    });
   }
 
   const now = new Date();
 
-  // If bound to another device AND not owner key
-  const isOwnerKey = cleanKey === 'UDIN-LHIA-F0HD';
-  if (item.bound_hwid && item.bound_hwid !== cleanHwid && !isOwnerKey) {
+  // 4. HWID Binding check
+  if (item.bound_hwid && item.bound_hwid !== cleanHwid) {
     return res.status(403).json({
       success: false,
       message: 'Key is already bound to another device. Contact admin to reset HWID.'
     });
   }
 
-  // Check expiration if not lifetime
+  // 5. Check expiration
   if (!item.is_lifetime && item.expiry_date) {
     if (now.getTime() >= new Date(item.expiry_date).getTime()) {
-      return res.status(403).json({ success: false, message: 'This access key has expired.' });
+      return res.status(403).json({
+        success: false,
+        message: 'This access key has expired.'
+      });
     }
   }
 
-  // Bind HWID
+  // Bind HWID & update
   item.bound_hwid = cleanHwid;
   item.activated_at = item.activated_at || now.toISOString();
   item.device_model = device_model || item.device_model || 'iOS Device';
@@ -110,7 +140,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    fs.writeFileSync(TMP_DATA_FILE, JSON.stringify({ keys }, null, 2), 'utf8');
+    fs.writeFileSync(TMP_DATA_FILE, JSON.stringify({ keys, revoked }, null, 2), 'utf8');
   } catch (e) {}
 
   return res.json({

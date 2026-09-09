@@ -28,10 +28,13 @@ module.exports = async (req, res) => {
   const cleanHwid = String(hwid).trim();
 
   let keys = [];
+  let revoked = [];
+
   try {
     if (fs.existsSync(LOCAL_DATA_FILE)) {
       const p = JSON.parse(fs.readFileSync(LOCAL_DATA_FILE, 'utf8'));
       if (p && Array.isArray(p.keys)) keys = p.keys;
+      if (p && Array.isArray(p.revoked)) revoked = p.revoked;
     }
   } catch (e) {}
 
@@ -45,29 +48,59 @@ module.exports = async (req, res) => {
           else keys.push(k);
         });
       }
+      if (p && Array.isArray(p.revoked)) {
+        p.revoked.forEach(r => {
+          if (!revoked.includes(r.toUpperCase())) revoked.push(r.toUpperCase());
+        });
+      }
     }
   } catch (e) {}
 
-  let item = keys.find(k => k.key.toUpperCase() === cleanKey);
+  // 1. Check if explicitly revoked / deleted
+  if (revoked.includes(cleanKey)) {
+    return res.status(403).json({
+      valid: false,
+      revoked: true,
+      message: 'License key has been deleted/revoked by administrator.'
+    });
+  }
 
+  // 2. Find key in active database
+  const item = keys.find(k => k.key.toUpperCase() === cleanKey);
   if (!item) {
-    if (cleanKey.startsWith('UDIN-')) {
-      return res.json({ valid: true, plan: 'Lifetime VIP', is_lifetime: true });
-    }
-    return res.status(404).json({ valid: false, message: 'Key not found.' });
+    return res.status(404).json({
+      valid: false,
+      revoked: true,
+      message: 'License key not found or deleted by administrator.'
+    });
   }
 
+  // 3. Check if banned
   if (item.is_banned) {
-    return res.status(403).json({ valid: false, message: 'Key suspended.' });
+    return res.status(403).json({
+      valid: false,
+      banned: true,
+      message: 'License key has been banned by administrator.'
+    });
   }
 
+  // 4. Check HWID match
   if (item.bound_hwid && item.bound_hwid !== cleanHwid) {
-    return res.status(403).json({ valid: false, message: 'HWID mismatch.' });
+    return res.status(403).json({
+      valid: false,
+      hwidMismatch: true,
+      message: 'Device HWID mismatch. Reset HWID on admin panel to re-bind.'
+    });
   }
 
+  // 5. Check expiry
   if (!item.is_lifetime && item.expiry_date) {
     if (Date.now() >= new Date(item.expiry_date).getTime()) {
-      return res.status(403).json({ valid: false, message: 'Key expired.' });
+      return res.status(403).json({
+        valid: false,
+        expired: true,
+        message: 'License key has expired.'
+      });
     }
   }
 
