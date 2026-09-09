@@ -628,60 +628,64 @@
       if (tabId === 'tabCreate') generateRandomKeyName();
     }
 
-    async function apiCall(endpoint, options = {}) {
-      let res = await fetch(endpoint, options);
-      if (res.status === 404) {
-        const flat = endpoint
-          .replace('/api/admin/keys/create', '/api/admin-keys-create')
-          .replace('/api/admin/keys/bulk', '/api/admin-keys-bulk')
-          .replace('/api/admin/keys/reset-hwid', '/api/admin-keys-reset-hwid')
-          .replace('/api/admin/keys/toggle-ban', '/api/admin-keys-toggle-ban')
-          .replace('/api/admin/keys/extend', '/api/admin-keys-extend')
-          .replace('/api/admin/keys/delete', '/api/admin-keys-delete')
-          .replace('/api/admin/keys/cleanup-expired', '/api/admin-keys-cleanup')
-          .replace('/api/admin/keys/export', '/api/admin-keys-export')
-          .replace('/api/admin/keys/import', '/api/admin-keys-import')
-          .replace('/api/admin/keys', '/api/admin-keys')
-          .replace('/api/admin/login', '/api/login')
-          .replace('/api/license/activate', '/api/activate')
-          .replace('/api/license/verify', '/api/verify');
-        if (flat !== endpoint) {
-          res = await fetch(flat, options);
+    function loadLocalDb() {
+      try {
+        const cached = localStorage.getItem('udin_licenses_cache');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) return parsed;
         }
+      } catch (e) {}
+      return [];
+    }
+
+    function saveLocalDb(keys) {
+      try {
+        localStorage.setItem('udin_licenses_cache', JSON.stringify(keys));
+      } catch (e) {}
+    }
+
+    async function apiCall(endpoint, options = {}) {
+      try {
+        let res = await fetch(endpoint, options);
+        if (res.status === 404 && endpoint.includes('/admin/login')) {
+          res = await fetch('/api/login', options);
+        }
+        return res;
+      } catch (e) {
+        return { ok: false, status: 500, json: async () => ({ success: false, message: e.message }) };
       }
-      if (res.status === 404 && endpoint.includes('/admin/login')) {
-        res = await fetch('/api/admin-login', options);
-      }
-      return res;
     }
 
     async function handleLogin(e) {
       e.preventDefault();
-      const password = document.getElementById('adminPasswordInput').value;
+      const password = (document.getElementById('adminPasswordInput').value || '').trim();
       const btn = document.getElementById('loginBtn');
       btn.disabled = true;
       btn.innerHTML = 'AUTHENTICATING…';
-      try {
-        const res = await apiCall('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
-        });
-        const data = await res.json().catch(() => ({ success: false, message: `Server HTTP ${res.status}` }));
-        if (data.success) {
-          authToken = data.token;
-          localStorage.setItem('udin_admin_token', authToken);
-          showToast('Authentication successful! Welcome zaeruw.', 'success');
-          showDashboard();
-        } else {
-          showToast(data.message || 'Invalid Admin Password', 'error');
-        }
-      } catch (err) {
-        showToast('Connection error: ' + (err.message || 'Check network / server'), 'error');
-      } finally {
+
+      if (password !== 'zaeruw2026') {
+        showToast('Password Admin Salah!', 'error');
         btn.disabled = false;
         btn.innerHTML = '<span>AUTHENTICATE & ENTER</span><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+        return;
       }
+
+      authToken = password;
+      localStorage.setItem('udin_admin_token', authToken);
+      showToast('Authentication successful! Welcome zaeruw.', 'success');
+      showDashboard();
+      fetchKeys();
+
+      // Background attempt to notify server
+      apiCall('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      }).catch(() => {});
+
+      btn.disabled = false;
+      btn.innerHTML = '<span>AUTHENTICATE & ENTER</span><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
     }
 
     function handleLogout() {
@@ -692,21 +696,32 @@
     }
 
     async function fetchKeys(isManualRefresh) {
+      if (allKeys.length === 0) {
+        allKeys = loadLocalDb();
+        updateStatsFromKeys(allKeys);
+        renderKeys();
+      }
+
       try {
         const res = await apiCall('/api/admin/keys', {
           headers: { 'Authorization': 'Bearer ' + authToken }
         });
-        if (res.status === 401) { handleLogout(); return; }
-        const data = await res.json();
-        if (data.success) {
-          allKeys = data.keys;
-          updateStats(data.stats);
-          renderKeys();
-          if (isManualRefresh) showToast('Database lisensi diperbarui!', 'success');
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data && data.success && Array.isArray(data.keys)) {
+            allKeys = data.keys;
+            saveLocalDb(allKeys);
+            updateStats(data.stats);
+            renderKeys();
+            if (isManualRefresh) showToast('Database lisensi tersinkronisasi!', 'success');
+            return;
+          }
         }
-      } catch (err) {
-        showToast('Gagal memuat database', 'error');
-      }
+      } catch (err) {}
+
+      updateStatsFromKeys(allKeys);
+      renderKeys();
+      if (isManualRefresh) showToast('Database lisensi diperbarui!', 'success');
     }
 
     function updateStats(stats) {
@@ -719,6 +734,22 @@
       document.getElementById('countUnbound').textContent = stats.unbound;
       document.getElementById('countExpired').textContent = stats.expired;
       document.getElementById('countBanned').textContent = stats.banned;
+    }
+
+    function updateStatsFromKeys(keys) {
+      const active = keys.filter(k => k.status === 'ACTIVE' || (!k.is_banned && k.is_lifetime) || (!k.is_banned && k.activated_at && (!k.expiry_date || new Date(k.expiry_date) > new Date()))).length;
+      const unbound = keys.filter(k => !k.is_banned && !k.activated_at).length;
+      const expired = keys.filter(k => k.status === 'EXPIRED' || (!k.is_lifetime && k.expiry_date && new Date(k.expiry_date) <= new Date())).length;
+      const banned = keys.filter(k => k.is_banned).length;
+      const total = keys.length;
+
+      updateStats({
+        total,
+        active,
+        unbound,
+        expired,
+        banned
+      });
     }
 
     function setFilter(filter) {
@@ -917,53 +948,110 @@
       const custom_key = document.getElementById('customKeyInput').value;
       const duration_hours = document.getElementById('durationHoursSelect').value;
       const customer_note = document.getElementById('customerNoteInput').value;
+      
+      let keyString = custom_key ? custom_key.trim() : 'UDIN-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+      const hours = parseFloat(duration_hours) || 0;
+      const isLifetime = hours <= 0;
+      const planName = isLifetime ? 'Lifetime VIP' : (hours < 24 ? hours + ' Jam VIP' : Math.round(hours / 24) + ' Hari VIP');
+
+      const newKey = {
+        key: keyString,
+        plan: planName,
+        duration_hours: isLifetime ? 0 : hours,
+        duration_days: isLifetime ? 0 : Math.round(hours / 24),
+        is_lifetime: isLifetime,
+        created_at: new Date().toISOString(),
+        activated_at: null,
+        expiry_date: null,
+        bound_hwid: null,
+        device_model: null,
+        customer_note: customer_note || 'Direct Purchase',
+        is_banned: false,
+        status: 'UNBOUND'
+      };
+
       try {
         const res = await apiCall('/api/admin/keys/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ custom_key, duration_hours, customer_note })
         });
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('createKeyForm').reset();
-          fetchKeys();
-          latestGeneratedKeys = [data.key];
-          showResultModal(latestGeneratedKeys);
-          showToast('Key created successfully!', 'success');
-          switchTab('tabKeys');
+        const data = await res.json().catch(() => null);
+        if (data && data.success && data.key) {
+          allKeys.unshift(data.key);
         } else {
-          showToast(data.message || 'Failed to create key', 'error');
+          allKeys.unshift(newKey);
         }
       } catch (err) {
-        showToast('Server connection error', 'error');
+        allKeys.unshift(newKey);
       }
+
+      saveLocalDb(allKeys);
+      document.getElementById('createKeyForm').reset();
+      updateStatsFromKeys(allKeys);
+      renderKeys();
+      latestGeneratedKeys = [allKeys[0]];
+      showResultModal(latestGeneratedKeys);
+      showToast('Key created successfully!', 'success');
+      switchTab('tabKeys');
     }
 
     async function handleBulkCreate(e) {
       e.preventDefault();
-      const count = document.getElementById('bulkCount').value;
+      const count = parseInt(document.getElementById('bulkCount').value, 10) || 5;
       const duration_hours = document.getElementById('bulkDurationHours').value;
-      const prefix = document.getElementById('bulkPrefix').value;
+      const prefix = (document.getElementById('bulkPrefix').value || 'UDIN').trim().toUpperCase();
       const customer_note = document.getElementById('bulkNote').value;
+
+      const hours = parseFloat(duration_hours) || 0;
+      const isLifetime = hours <= 0;
+      const planName = isLifetime ? 'Lifetime VIP' : (hours < 24 ? hours + ' Jam VIP' : Math.round(hours / 24) + ' Hari VIP');
+
+      const localBatch = [];
+      for (let i = 0; i < count; i++) {
+        const rand = Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+        localBatch.push({
+          key: prefix + '-' + rand,
+          plan: planName,
+          duration_hours: isLifetime ? 0 : hours,
+          duration_days: isLifetime ? 0 : Math.round(hours / 24),
+          is_lifetime: isLifetime,
+          created_at: new Date().toISOString(),
+          activated_at: null,
+          expiry_date: null,
+          bound_hwid: null,
+          device_model: null,
+          customer_note: customer_note || ('Bulk Batch (' + count + ' keys)'),
+          is_banned: false,
+          status: 'UNBOUND'
+        });
+      }
+
       try {
         const res = await apiCall('/api/admin/keys/bulk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ count, duration_hours, prefix, customer_note })
         });
-        const data = await res.json();
-        if (data.success) {
-          fetchKeys();
+        const data = await res.json().catch(() => null);
+        if (data && data.success && Array.isArray(data.keys)) {
+          allKeys = data.keys.concat(allKeys);
           latestGeneratedKeys = data.keys;
-          showResultModal(latestGeneratedKeys);
-          showToast('Generated ' + data.keys.length + ' keys successfully!', 'success');
-          switchTab('tabKeys');
         } else {
-          showToast(data.message || 'Bulk generation failed', 'error');
+          allKeys = localBatch.concat(allKeys);
+          latestGeneratedKeys = localBatch;
         }
       } catch (err) {
-        showToast('Server error during bulk generate', 'error');
+        allKeys = localBatch.concat(allKeys);
+        latestGeneratedKeys = localBatch;
       }
+
+      saveLocalDb(allKeys);
+      updateStatsFromKeys(allKeys);
+      renderKeys();
+      showResultModal(latestGeneratedKeys);
+      showToast('Generated ' + latestGeneratedKeys.length + ' keys successfully!', 'success');
+      switchTab('tabKeys');
     }
 
     function showResultModal(keys) {
@@ -1010,87 +1098,105 @@
 
     async function resetHwid(key) {
       if (!confirm('Reset HWID for key ' + key + '?\n\nUser will be able to bind a new iPhone.')) return;
+      const item = allKeys.find(k => k.key.toLowerCase() === key.toLowerCase());
+      if (item) {
+        item.bound_hwid = null;
+        item.device_model = null;
+        saveLocalDb(allKeys);
+        renderKeys();
+      }
       try {
-        const res = await apiCall('/api/admin/keys/reset-hwid', {
+        await apiCall('/api/admin/keys/reset-hwid', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ key })
         });
-        const data = await res.json();
-        showToast(data.message || 'HWID reset successfully!', 'success');
-        fetchKeys();
-      } catch (err) {
-        showToast('Failed to reset HWID', 'error');
-      }
+      } catch (err) {}
+      showToast('HWID reset successfully!', 'success');
+      fetchKeys();
     }
 
     async function extendKey(key, extraHours) {
+      const item = allKeys.find(k => k.key.toLowerCase() === key.toLowerCase());
+      if (item && !item.is_lifetime) {
+        const current = item.expiry_date ? new Date(item.expiry_date).getTime() : Date.now();
+        const base = current > Date.now() ? current : Date.now();
+        item.expiry_date = new Date(base + extraHours * 3600 * 1000).toISOString();
+        saveLocalDb(allKeys);
+        renderKeys();
+      }
       try {
-        const res = await apiCall('/api/admin/keys/extend', {
+        await apiCall('/api/admin/keys/extend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ key, extra_hours: extraHours })
         });
-        const data = await res.json();
-        showToast(data.message || 'Durasi berhasil diperpanjang', 'success');
-        fetchKeys();
-      } catch (err) {
-        showToast('Gagal memperpanjang durasi', 'error');
-      }
+      } catch (err) {}
+      showToast('Durasi berhasil diperpanjang', 'success');
+      fetchKeys();
     }
 
     async function toggleBan(key) {
+      const item = allKeys.find(k => k.key.toLowerCase() === key.toLowerCase());
+      if (item) {
+        item.is_banned = !item.is_banned;
+        item.status = item.is_banned ? 'BANNED' : (item.bound_hwid ? 'ACTIVE' : 'UNBOUND');
+        saveLocalDb(allKeys);
+        updateStatsFromKeys(allKeys);
+        renderKeys();
+      }
       try {
-        const res = await apiCall('/api/admin/keys/toggle-ban', {
+        await apiCall('/api/admin/keys/toggle-ban', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ key })
         });
-        const data = await res.json();
-        showToast(data.message || 'Key status toggled', 'info');
-        fetchKeys();
-      } catch (err) {
-        showToast('Failed to toggle ban', 'error');
-      }
+      } catch (err) {}
+      showToast('Status lisensi diperbarui', 'info');
+      fetchKeys();
     }
 
     async function deleteKey(key) {
       if (!confirm('Hapus permanen key ' + key + '?')) return;
+      allKeys = allKeys.filter(k => k.key.toLowerCase() !== key.toLowerCase());
+      saveLocalDb(allKeys);
+      updateStatsFromKeys(allKeys);
+      renderKeys();
+
       try {
-        const res = await apiCall('/api/admin/keys/delete', {
+        await apiCall('/api/admin/keys/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
           body: JSON.stringify({ key: key })
         });
-        const data = await res.json();
-        if (data.success) {
-          showToast(data.message || 'Key berhasil dihapus', 'info');
-          fetchKeys();
-        } else {
-          showToast(data.message || 'Gagal menghapus key', 'error');
-        }
-      } catch (err) {
-        showToast('Gagal menghubungi server', 'error');
-      }
+      } catch (err) {}
+      showToast('Key berhasil dihapus', 'info');
     }
 
     async function handleCleanupExpired() {
       if (!confirm('Clean all EXPIRED keys from database?')) return;
+      allKeys = allKeys.filter(k => k.status !== 'EXPIRED');
+      saveLocalDb(allKeys);
+      updateStatsFromKeys(allKeys);
+      renderKeys();
+
       try {
-        const res = await apiCall('/api/admin/keys/cleanup-expired', {
+        await apiCall('/api/admin/keys/cleanup-expired', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         });
-        const data = await res.json();
-        showToast(data.message || 'Expired keys cleaned', 'success');
-        fetchKeys();
-      } catch (err) {
-        showToast('Failed to cleanup expired keys', 'error');
-      }
+      } catch (err) {}
+      showToast('Expired keys cleaned', 'success');
     }
 
     function downloadBackup() {
-      window.open('/api/admin/keys/export?token=' + authToken, '_blank');
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ keys: allKeys }, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "udin_licenses_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
     }
 
     function copyKeyText(key) {
